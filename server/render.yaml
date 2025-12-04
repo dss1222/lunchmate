@@ -1,0 +1,11 @@
+# Render.com 배포 설정
+services:
+  - type: web
+    name: lunchmate-api
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+
