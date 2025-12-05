@@ -1,0 +1,91 @@
+"""
+점심방 서비스
+점심방 관련 비즈니스 로직
+"""
+from typing import Optional, List
+from datetime import datetime
+from fastapi import HTTPException
+
+from ..repositories import data_store
+from ..core.utils import generate_id, get_recommended_restaurant
+
+
+class RoomService:
+    """점심방 관련 비즈니스 로직"""
+    
+    @staticmethod
+    def get_all_rooms() -> List[dict]:
+        """열린 점심방 목록 조회"""
+        return data_store.get_open_rooms()
+    
+    @staticmethod
+    def get_room(room_id: str) -> dict:
+        """점심방 상세 조회"""
+        room = data_store.get_room_by_id(room_id)
+        if not room:
+            raise HTTPException(status_code=404, detail="Room not found")
+        return room
+    
+    @staticmethod
+    def create_room(title: str, time_slot: str, menu: str, price_range: str,
+                    max_count: int, creator_id: str, creator_name: str,
+                    creator_department: str) -> dict:
+        """점심방 생성"""
+        room = data_store.create_room({
+            "title": title,
+            "timeSlot": time_slot,
+            "menu": menu,
+            "priceRange": price_range,
+            "maxCount": min(max(max_count, 2), 6),
+            "members": [{
+                "id": creator_id or generate_id(),
+                "name": creator_name,
+                "department": creator_department,
+                "isCreator": True,
+            }],
+            "restaurant": get_recommended_restaurant(menu, price_range),
+            "status": "open",
+        })
+        return room
+    
+    @staticmethod
+    def join_room(room_id: str, user_id: str, name: str, department: str) -> dict:
+        """점심방 참여"""
+        room = data_store.get_room_by_id(room_id)
+        if not room:
+            raise HTTPException(status_code=404, detail="Room not found")
+        
+        if len(room["members"]) >= room["maxCount"]:
+            raise HTTPException(status_code=400, detail="Room is full")
+        
+        if any(m["id"] == user_id for m in room["members"]):
+            raise HTTPException(status_code=400, detail="Already joined")
+        
+        room["members"].append({
+            "id": user_id or generate_id(),
+            "name": name,
+            "department": department,
+            "joinedAt": datetime.now().isoformat(),
+        })
+        
+        if len(room["members"]) >= room["maxCount"]:
+            room["status"] = "full"
+        
+        return room
+    
+    @staticmethod
+    def leave_room(room_id: str, user_id: str) -> dict:
+        """점심방 나가기"""
+        room = data_store.get_room_by_id(room_id)
+        if not room:
+            raise HTTPException(status_code=404, detail="Room not found")
+        
+        room["members"] = [m for m in room["members"] if m["id"] != user_id]
+        
+        if len(room["members"]) == 0:
+            data_store.delete_room(room_id)
+            return {"deleted": True}
+        
+        room["status"] = "open"
+        return room
+

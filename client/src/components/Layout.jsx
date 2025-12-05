@@ -55,11 +55,13 @@ export default function Layout({ children, currentUser, onLogout }) {
                     <div className="font-medium text-gray-800">{currentUser?.name}</div>
                     <div className="text-sm text-gray-500">{currentUser?.department}</div>
                     <div className="text-xs text-gray-400 mt-1">
-                      {currentUser?.level === 'junior' && '사원'}
-                      {currentUser?.level === 'senior' && '대리/선임'}
-                      {currentUser?.level === 'manager' && '과장/팀장'}
                       {currentUser?.level === 'intern' && '인턴'}
-                      {currentUser?.level === 'executive' && '임원'}
+                      {currentUser?.level === 'staff' && '사원'}
+                      {currentUser?.level === 'assistant' && '대리'}
+                      {currentUser?.level === 'manager' && '과장'}
+                      {currentUser?.level === 'deputy' && '차장'}
+                      {currentUser?.level === 'general' && '부장'}
+                      {currentUser?.level === 'director' && '이사'}
                     </div>
                   </div>
                   

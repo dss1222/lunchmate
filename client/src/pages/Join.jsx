@@ -61,6 +61,9 @@ export default function Join({ currentUser }) {
         userId: currentUser.id,
         name: currentUser.name,
         department: currentUser.department,
+        gender: currentUser.gender,
+        age: currentUser.age,
+        level: currentUser.level,
         ...formData,
       })
 

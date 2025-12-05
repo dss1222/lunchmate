@@ -2,13 +2,23 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { register } from '../api'
 
-const departments = ['AI팀', '개발팀', '디자인팀', '마케팅팀', '컨설팅팀', '인사팀', '재무팀', '기타']
+const departments = [
+  '보안사업본부',
+  '미래보안사업본부',
+  '기획실',
+  '보안기술연구소',
+  '품질관리부',
+  '인사부',
+  '재경부',
+]
 const levels = [
   { id: 'intern', label: '인턴' },
-  { id: 'junior', label: '사원' },
-  { id: 'senior', label: '대리/선임' },
-  { id: 'manager', label: '과장/팀장' },
-  { id: 'executive', label: '임원' },
+  { id: 'staff', label: '사원' },
+  { id: 'assistant', label: '대리' },
+  { id: 'manager', label: '과장' },
+  { id: 'deputy', label: '차장' },
+  { id: 'general', label: '부장' },
+  { id: 'director', label: '이사' },
 ]
 const genders = [
   { id: 'male', label: '남성' },

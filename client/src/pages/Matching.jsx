@@ -17,6 +17,9 @@ const priceLabels = {
   high: '1.2만 이상',
 }
 
+const TOTAL_TIMEOUT = 300 // 5분 = 300초
+const RELAXATION_INTERVAL = 60 // 1분마다 조건 완화
+
 export default function Matching({ currentUser }) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -27,6 +30,8 @@ export default function Matching({ currentUser }) {
   const [status, setStatus] = useState('waiting')
   const [waitingCount, setWaitingCount] = useState(1)
   const [elapsed, setElapsed] = useState(0)
+  const [relaxationLevel, setRelaxationLevel] = useState(0)
+  const [relaxationMessage, setRelaxationMessage] = useState(null)
 
   useEffect(() => {
     if (!matchRequestId) {
@@ -34,16 +39,21 @@ export default function Matching({ currentUser }) {
       return
     }
 
-    // 상태 폴링
+    // 상태 폴링 (2초마다)
     const pollInterval = setInterval(async () => {
       try {
-        const result = await getMatchStatus(matchRequestId)
+        const result = await getMatchStatus(matchRequestId, elapsed)
         
         if (result.status === 'matched') {
           clearInterval(pollInterval)
           navigate(`/result?groupId=${result.groupId}`)
+        } else if (result.status === 'timeout') {
+          clearInterval(pollInterval)
+          navigate('/fail', { state: { reason: 'timeout', formData } })
         } else if (result.status === 'waiting') {
           setWaitingCount(result.waitingCount || 1)
+          setRelaxationLevel(result.relaxationLevel || 0)
+          setRelaxationMessage(result.relaxationMessage)
         } else if (result.status === 'not_found') {
           clearInterval(pollInterval)
           navigate('/fail', { state: { reason: 'not_found', formData } })
@@ -53,24 +63,24 @@ export default function Matching({ currentUser }) {
       }
     }, 2000)
 
-    // 경과 시간 카운터
+    // 경과 시간 카운터 (1초마다)
     const timerInterval = setInterval(() => {
-      setElapsed(prev => prev + 1)
+      setElapsed(prev => {
+        const newElapsed = prev + 1
+        if (newElapsed >= TOTAL_TIMEOUT) {
+          clearInterval(pollInterval)
+          clearInterval(timerInterval)
+          navigate('/fail', { state: { reason: 'timeout', formData } })
+        }
+        return newElapsed
+      })
     }, 1000)
-
-    // 60초 후 타임아웃
-    const timeout = setTimeout(() => {
-      clearInterval(pollInterval)
-      clearInterval(timerInterval)
-      navigate('/fail', { state: { reason: 'timeout', formData } })
-    }, 60000)
 
     return () => {
       clearInterval(pollInterval)
       clearInterval(timerInterval)
-      clearTimeout(timeout)
     }
-  }, [matchRequestId, navigate, formData])
+  }, [matchRequestId, navigate, formData, elapsed])
 
   const handleCancel = async () => {
     try {
@@ -88,8 +98,25 @@ export default function Matching({ currentUser }) {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
+  // 선택된 선호 조건들
+  const preferences = formData.preferences || {}
+  const hasPreferences = preferences.similarAge || preferences.sameGender || preferences.sameLevel
+
+  // 현재 단계에서 완화된 조건들
+  const getRelaxedConditions = () => {
+    const conditions = []
+    if (preferences.sameGender) conditions.push({ key: 'gender', label: '성별', icon: '👤' })
+    if (preferences.similarAge) conditions.push({ key: 'age', label: '나이', icon: '👥' })
+    if (preferences.sameLevel) conditions.push({ key: 'level', label: '직급', icon: '💼' })
+    return conditions
+  }
+
+  const allConditions = getRelaxedConditions()
+  const remainingConditions = allConditions.slice(relaxationLevel)
+  const relaxedConditions = allConditions.slice(0, relaxationLevel)
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8">
+    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-6">
       {/* Loading Animation */}
       <div className="relative">
         <div className="text-7xl animate-bounce-slow">🍱</div>
@@ -105,6 +132,18 @@ export default function Matching({ currentUser }) {
           같은 조건의 동료를 찾고 있어요
         </p>
       </div>
+
+      {/* Relaxation Message */}
+      {relaxationMessage && (
+        <div className="w-full max-w-sm bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <span className="text-xl">⚡</span>
+            <div className="text-left">
+              <p className="text-sm text-yellow-800 font-medium">{relaxationMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Conditions Card */}
       <div className="w-full max-w-sm bg-white/80 rounded-2xl p-5 shadow-sm">
@@ -123,6 +162,28 @@ export default function Matching({ currentUser }) {
             <span className="text-gray-700">{menuLabels[formData.menu] || '미선택'}</span>
           </div>
         </div>
+
+        {/* 선호 조건 상태 */}
+        {hasPreferences && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <h4 className="text-sm font-medium text-gray-500 mb-2">선호 조건</h4>
+            <div className="flex flex-wrap gap-2">
+              {remainingConditions.map(cond => (
+                <span key={cond.key} className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm">
+                  <span>{cond.icon}</span>
+                  <span>{cond.label}</span>
+                  <span className="text-primary-400">✓</span>
+                </span>
+              ))}
+              {relaxedConditions.map(cond => (
+                <span key={cond.key} className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-400 rounded-full text-sm line-through">
+                  <span>{cond.icon}</span>
+                  <span>{cond.label}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
@@ -135,17 +196,37 @@ export default function Matching({ currentUser }) {
           <div className="text-2xl font-bold text-gray-600">{formatTime(elapsed)}</div>
           <div className="text-xs text-gray-500">경과 시간</div>
         </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-accent-600">{formatTime(TOTAL_TIMEOUT - elapsed)}</div>
+          <div className="text-xs text-gray-500">남은 시간</div>
+        </div>
       </div>
 
       {/* Progress Bar */}
       <div className="w-full max-w-sm">
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-primary-400 to-primary-600 transition-all duration-1000"
-            style={{ width: `${Math.min((elapsed / 60) * 100, 100)}%` }}
+            className="h-full bg-gradient-to-r from-primary-400 via-primary-500 to-accent-500 transition-all duration-1000"
+            style={{ width: `${Math.min((elapsed / TOTAL_TIMEOUT) * 100, 100)}%` }}
           />
         </div>
-        <p className="text-xs text-gray-400 mt-2">최대 1분간 매칭을 시도합니다</p>
+        <div className="flex justify-between mt-2 text-xs text-gray-400">
+          <span>0:00</span>
+          {hasPreferences && (
+            <>
+              <span className={elapsed >= 60 ? 'text-yellow-500 font-medium' : ''}>1:00</span>
+              <span className={elapsed >= 120 ? 'text-yellow-500 font-medium' : ''}>2:00</span>
+              <span className={elapsed >= 180 ? 'text-yellow-500 font-medium' : ''}>3:00</span>
+            </>
+          )}
+          <span>5:00</span>
+        </div>
+        <p className="text-xs text-gray-400 mt-2 text-center">
+          {hasPreferences 
+            ? '1분마다 조건을 완화하며 최대 5분간 매칭합니다'
+            : '최대 5분간 매칭을 시도합니다'
+          }
+        </p>
       </div>
 
       {/* Action Buttons */}
@@ -166,4 +247,3 @@ export default function Matching({ currentUser }) {
     </div>
   )
 }
-

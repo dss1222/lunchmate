@@ -97,8 +97,8 @@ export async function joinMatch(data) {
 }
 
 // 매칭 상태 확인
-export async function getMatchStatus(matchRequestId) {
-  const res = await fetch(`${API_BASE}/match/status?matchRequestId=${matchRequestId}`);
+export async function getMatchStatus(matchRequestId, elapsedSeconds = 0) {
+  const res = await fetch(`${API_BASE}/match/status?matchRequestId=${matchRequestId}&elapsedSeconds=${elapsedSeconds}`);
   return res.json();
 }
 
