@@ -115,6 +115,12 @@ export async function cancelMatch(matchRequestId) {
   return res.json();
 }
 
+// 현재 활성 상태 확인 (매칭 대기/방 참여/그룹 참여)
+export async function getActiveStatus(userId) {
+  const res = await fetch(`${API_BASE}/match/active/${userId}`);
+  return res.json();
+}
+
 // 그룹 정보
 export async function getGroup(groupId) {
   const res = await fetch(`${API_BASE}/groups/${groupId}`);

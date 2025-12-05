@@ -44,3 +44,9 @@ def cancel_match(request: MatchCancelRequest):
     """매칭 취소"""
     return MatchService.cancel_match(request.matchRequestId)
 
+
+@router.get("/active/{user_id}")
+def get_active_status(user_id: str):
+    """현재 활성 상태 확인 (매칭 대기/방 참여/그룹 참여)"""
+    return MatchService.get_user_active_status(user_id)
+

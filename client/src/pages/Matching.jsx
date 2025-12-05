@@ -244,7 +244,15 @@ export default function Matching({ currentUser, refreshUser }) {
       {/* Action Buttons */}
       <div className="w-full max-w-sm space-y-3">
         <button
-          onClick={() => navigate('/fail', { state: { reason: 'manual', formData } })}
+          onClick={async () => {
+            // 매칭 취소 후 조건 변경 페이지로 이동
+            try {
+              await cancelMatch(matchRequestId)
+            } catch (err) {
+              console.error('Cancel error:', err)
+            }
+            navigate('/fail', { state: { reason: 'manual', formData, matchRequestId } })
+          }}
           className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl font-medium transition-colors btn-press"
         >
           조건 변경하기

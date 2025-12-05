@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { getStats, getMyRooms } from '../api'
+import { Link, useNavigate } from 'react-router-dom'
+import { getStats, getMyRooms, getActiveStatus, cancelMatch } from '../api'
 
 const menuLabels = {
   korean: { name: '한식', emoji: '🍚' },
@@ -36,17 +36,22 @@ const getLevelInfo = (matchCount) => {
 }
 
 export default function Home({ currentUser, refreshUser }) {
+  const navigate = useNavigate()
   const [stats, setStats] = useState(null)
   const [myRooms, setMyRooms] = useState([])
+  const [activeStatus, setActiveStatus] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [canceling, setCanceling] = useState(false)
 
   useEffect(() => {
     fetchStats()
     fetchMyRooms()
+    fetchActiveStatus()
     const interval = setInterval(() => {
       fetchStats()
       fetchMyRooms()
-    }, 5000)
+      fetchActiveStatus()
+    }, 3000)
     return () => clearInterval(interval)
   }, [currentUser?.id])
 
@@ -71,6 +76,35 @@ export default function Home({ currentUser, refreshUser }) {
     }
   }
 
+  async function fetchActiveStatus() {
+    if (!currentUser?.id) return
+    try {
+      const data = await getActiveStatus(currentUser.id)
+      setActiveStatus(data)
+    } catch (err) {
+      console.error('Active status fetch error:', err)
+    }
+  }
+
+  async function handleCancelMatch() {
+    if (!activeStatus?.data?.matchRequestId) return
+    setCanceling(true)
+    try {
+      await cancelMatch(activeStatus.data.matchRequestId)
+      setActiveStatus(null)
+    } catch (err) {
+      console.error('Cancel error:', err)
+    } finally {
+      setCanceling(false)
+    }
+  }
+
+  function handleContinueMatch() {
+    if (activeStatus?.data?.matchRequestId) {
+      navigate(`/matching?matchRequestId=${activeStatus.data.matchRequestId}`)
+    }
+  }
+
   // 인기 메뉴 계산
   const popularMenus = stats?.menuStats 
     ? Object.entries(stats.menuStats)
@@ -88,6 +122,9 @@ export default function Home({ currentUser, refreshUser }) {
   const hasCompletedMatch = myRooms.some(room => 
     room.status === 'full' || room.members.length >= room.maxCount
   )
+
+  // 현재 활성 상태가 있는지 (매칭 대기, 방 참여, 그룹 완료)
+  const isCurrentlyActive = activeStatus?.active
 
   return (
     <div className="space-y-6">
@@ -108,6 +145,42 @@ export default function Home({ currentUser, refreshUser }) {
           )}
         </p>
       </div>
+
+      {/* 매칭 대기 중 알림 */}
+      {activeStatus?.active && activeStatus.type === 'waiting' && (
+        <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 shadow-lg shadow-blue-200 text-white">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-bold flex items-center gap-2">
+              <span className="text-2xl">⏳</span> 매칭 진행 중!
+            </h2>
+            <div className="flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full">
+              <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+              <span className="text-sm">대기 중</span>
+            </div>
+          </div>
+          <div className="bg-white/20 rounded-xl p-4 mb-4">
+            <div className="flex items-center gap-4 text-sm">
+              <span>⏰ {activeStatus.data.timeSlot}</span>
+              <span>🍽️ {menuLabels[activeStatus.data.menu]?.name || activeStatus.data.menu}</span>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={handleContinueMatch}
+              className="flex-1 py-3 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors"
+            >
+              매칭 화면으로 →
+            </button>
+            <button
+              onClick={handleCancelMatch}
+              disabled={canceling}
+              className="px-4 py-3 bg-white/20 hover:bg-white/30 font-medium rounded-xl transition-colors"
+            >
+              {canceling ? '취소 중...' : '취소'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 오늘 내 점심방 */}
       {myRooms.length > 0 && (
@@ -169,10 +242,24 @@ export default function Home({ currentUser, refreshUser }) {
       )}
 
       {/* CTA Button */}
-      {hasCompletedMatch ? (
+      {hasCompletedMatch || (activeStatus?.active && activeStatus.type === 'group') ? (
         <div className="block w-full bg-gray-300 text-gray-500 font-bold py-4 px-6 rounded-2xl text-center text-lg shadow-sm cursor-not-allowed">
           ✅ 오늘 점심 매칭 완료
         </div>
+      ) : activeStatus?.active && activeStatus.type === 'waiting' ? (
+        <button
+          onClick={handleContinueMatch}
+          className="block w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-2xl text-center text-lg shadow-lg shadow-blue-200 transition-all btn-press card-hover"
+        >
+          ⏳ 매칭 진행 중 - 확인하기
+        </button>
+      ) : activeStatus?.active && activeStatus.type === 'room' ? (
+        <Link
+          to={`/rooms/${activeStatus.data.id}`}
+          className="block w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-2xl text-center text-lg shadow-lg shadow-sky-200 transition-all btn-press card-hover"
+        >
+          🏠 참여 중인 점심방 보기
+        </Link>
       ) : (
         <Link
           to="/join"
@@ -255,19 +342,31 @@ export default function Home({ currentUser, refreshUser }) {
           <span className="text-gray-400">→</span>
         </Link>
 
-        <Link
-          to="/rooms/create"
-          className="flex items-center justify-between bg-white rounded-2xl p-4 shadow-sm border border-gray-100 card-hover"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">➕</span>
-            <div>
-              <div className="font-semibold text-gray-800">내 점심방 만들기</div>
-              <div className="text-sm text-gray-500">직접 방을 만들어 사람을 모아보세요</div>
+        {isCurrentlyActive ? (
+          <div className="flex items-center justify-between bg-gray-100 rounded-2xl p-4 shadow-sm border border-gray-200 cursor-not-allowed opacity-60">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🔒</span>
+              <div>
+                <div className="font-semibold text-gray-500">내 점심방 만들기</div>
+                <div className="text-sm text-gray-400">진행 중인 점심 활동을 완료해주세요</div>
+              </div>
             </div>
           </div>
-          <span className="text-gray-400">→</span>
-        </Link>
+        ) : (
+          <Link
+            to="/rooms/create"
+            className="flex items-center justify-between bg-white rounded-2xl p-4 shadow-sm border border-gray-100 card-hover"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">➕</span>
+              <div>
+                <div className="font-semibold text-gray-800">내 점심방 만들기</div>
+                <div className="text-sm text-gray-500">직접 방을 만들어 사람을 모아보세요</div>
+              </div>
+            </div>
+            <span className="text-gray-400">→</span>
+          </Link>
+        )}
       </div>
 
       {/* 사내공지 Section */}

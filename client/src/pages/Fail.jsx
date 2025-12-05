@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom'
+import { cancelMatch, getActiveStatus } from '../api'
 
 const reasonMessages = {
   timeout: '아직 같은 조건의 동료를 찾지 못했어요',
@@ -13,8 +14,24 @@ export default function Fail({ currentUser }) {
   const reason = location.state?.reason || 'default'
   const formData = location.state?.formData || {}
 
+  // 진행 중인 매칭이 있으면 취소하고 이동
+  const cancelAndNavigate = async (path, state = {}) => {
+    try {
+      // 현재 활성 상태 확인
+      if (currentUser?.id) {
+        const status = await getActiveStatus(currentUser.id)
+        if (status?.active && status.type === 'waiting' && status.data?.matchRequestId) {
+          await cancelMatch(status.data.matchRequestId)
+        }
+      }
+    } catch (err) {
+      console.error('Cancel error:', err)
+    }
+    navigate(path, { state })
+  }
+
   const handleRetryWithSameConditions = () => {
-    navigate('/join', { state: { prefill: formData } })
+    cancelAndNavigate('/join', { prefill: formData })
   }
 
   return (
@@ -55,27 +72,27 @@ export default function Fail({ currentUser }) {
       <div className="w-full max-w-sm space-y-3">
         <button
           onClick={handleRetryWithSameConditions}
-          className="w-full py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-bold rounded-2xl shadow-lg shadow-primary-200 btn-press"
+          className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-200 btn-press"
         >
           🔄 조건 완화하고 다시 시도
         </button>
         
         <button
-          onClick={() => navigate('/rooms/create', { state: { prefill: formData } })}
-          className="w-full py-4 bg-accent-500 hover:bg-accent-600 text-white font-bold rounded-2xl shadow-lg shadow-accent-200 btn-press"
+          onClick={() => cancelAndNavigate('/rooms/create', { prefill: formData })}
+          className="w-full py-4 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-2xl shadow-lg shadow-sky-200 btn-press"
         >
           🏠 나만의 점심방 만들기
         </button>
 
         <button
-          onClick={() => navigate('/rooms')}
+          onClick={() => cancelAndNavigate('/rooms')}
           className="w-full py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors btn-press"
         >
           📋 열려있는 점심방 보기
         </button>
 
         <button
-          onClick={() => navigate('/')}
+          onClick={() => cancelAndNavigate('/')}
           className="w-full py-3 text-gray-500 hover:text-gray-700 font-medium transition-colors"
         >
           오늘은 그냥 혼밥할래요 🍚

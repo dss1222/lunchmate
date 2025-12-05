@@ -316,4 +316,42 @@ class MatchService:
         """매칭 취소"""
         data_store.remove_waiting_user(match_request_id)
         return {"success": True}
+    
+    @staticmethod
+    def get_user_active_status(user_id: str) -> dict:
+        """사용자의 현재 활성 상태 확인"""
+        # 매칭 대기 중인지 확인
+        waiting = data_store.get_waiting_user_by_user_id(user_id)
+        if waiting:
+            return {
+                "active": True,
+                "type": "waiting",
+                "data": {
+                    "matchRequestId": waiting["id"],
+                    "timeSlot": waiting.get("timeSlot"),
+                    "menu": waiting.get("menu"),
+                    "priceRange": waiting.get("priceRange"),
+                    "joinedAt": waiting.get("joinedAt"),
+                }
+            }
+        
+        # 오늘 참여 중인 방이 있는지 확인
+        active_room = data_store.get_user_active_room(user_id)
+        if active_room:
+            return {
+                "active": True,
+                "type": "room",
+                "data": active_room
+            }
+        
+        # 오늘 매칭된 그룹이 있는지 확인
+        active_group = data_store.get_user_active_group(user_id)
+        if active_group:
+            return {
+                "active": True,
+                "type": "group",
+                "data": active_group
+            }
+        
+        return {"active": False, "type": None, "data": None}
 

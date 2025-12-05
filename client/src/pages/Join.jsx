@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { joinMatch } from '../api'
+import { joinMatch, getActiveStatus } from '../api'
 
 const timeSlots = ['11:30', '12:00', '12:30', '13:00']
 
@@ -34,6 +34,28 @@ export default function Join({ currentUser }) {
       sameLevel: false,
     }
   })
+
+  // 페이지 진입 시 활성 상태 체크
+  useEffect(() => {
+    async function checkActiveStatus() {
+      if (!currentUser?.id) return
+      try {
+        const status = await getActiveStatus(currentUser.id)
+        if (status?.active) {
+          const typeNames = {
+            waiting: '매칭 대기 중',
+            room: '점심방에 참여 중',
+            group: '점심 매칭이 완료된 상태'
+          }
+          alert(`이미 ${typeNames[status.type] || '점심 활동 중'}입니다. 먼저 기존 활동을 완료하거나 취소해주세요.`)
+          navigate('/')
+        }
+      } catch (err) {
+        console.error('Active status check error:', err)
+      }
+    }
+    checkActiveStatus()
+  }, [currentUser?.id, navigate])
 
   const handleMenuSelect = (menuId) => {
     setFormData(prev => ({ ...prev, menu: menuId }))

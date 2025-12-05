@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getRooms, joinRoom } from '../api'
+import { getRooms, joinRoom, getActiveStatus } from '../api'
 
 const menuLabels = {
   korean: { name: '한식', emoji: '🍚' },
@@ -33,15 +33,16 @@ const getLevelInfo = (matchCount) => {
 }
 
 // 방 카드 컴포넌트
-function RoomCard({ room, currentUser, joining, onJoin, getLevelInfo, menuLabels, priceLabels, hasMatchedRoom }) {
+function RoomCard({ room, currentUser, joining, onJoin, getLevelInfo, menuLabels, priceLabels, activeStatus }) {
   const menuInfo = menuLabels[room.menu] || { name: room.menu, emoji: '🍽️' }
   const isFull = room.status === 'full' || room.members.length >= room.maxCount
   const isJoined = room.members.some(m => m.id === currentUser.id)
   const creator = room.members.find(m => m.isCreator)
   const creatorLevel = getLevelInfo(creator?.matchCount || 0)
   
-  // 이미 매칭된 방이 있고, 이 방에 참여하지 않은 경우 참여 불가
-  const cannotJoin = hasMatchedRoom && !isJoined
+  // 이미 다른 점심 활동에 참여 중이고, 이 방에 참여하지 않은 경우 참여 불가
+  const isBlocked = activeStatus?.active && !isJoined
+  const blockReason = activeStatus?.type
 
   return (
     <div className={`bg-white rounded-2xl p-5 shadow-sm border card-hover ${
@@ -134,12 +135,14 @@ function RoomCard({ room, currentUser, joining, onJoin, getLevelInfo, menuLabels
         <div className="w-full py-3 bg-green-50 text-green-700 rounded-xl font-medium text-center border border-green-200">
           ✓ 매칭 완료된 방입니다
         </div>
-      ) : cannotJoin ? (
+      ) : isBlocked ? (
         <button
           disabled
           className="w-full py-3 bg-gray-200 text-gray-500 rounded-xl font-medium cursor-not-allowed"
         >
-          🔒 이미 매칭된 방이 있어요
+          {blockReason === 'waiting' && '⏳ 매칭 진행 중입니다'}
+          {blockReason === 'room' && '🏠 이미 참여 중인 방이 있어요'}
+          {blockReason === 'group' && '🔒 오늘 매칭이 완료되었어요'}
         </button>
       ) : (
         <button
@@ -159,12 +162,17 @@ export default function Rooms({ currentUser, refreshUser }) {
   const [rooms, setRooms] = useState([])
   const [loading, setLoading] = useState(true)
   const [joining, setJoining] = useState(null)
+  const [activeStatus, setActiveStatus] = useState(null)
 
   useEffect(() => {
     fetchRooms()
-    const interval = setInterval(fetchRooms, 5000)
+    fetchActiveStatus()
+    const interval = setInterval(() => {
+      fetchRooms()
+      fetchActiveStatus()
+    }, 5000)
     return () => clearInterval(interval)
-  }, [])
+  }, [currentUser?.id])
 
   async function fetchRooms() {
     try {
@@ -174,6 +182,16 @@ export default function Rooms({ currentUser, refreshUser }) {
       console.error('Rooms fetch error:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function fetchActiveStatus() {
+    if (!currentUser?.id) return
+    try {
+      const data = await getActiveStatus(currentUser.id)
+      setActiveStatus(data)
+    } catch (err) {
+      console.error('Active status fetch error:', err)
     }
   }
 
@@ -195,8 +213,11 @@ export default function Rooms({ currentUser, refreshUser }) {
     }
   }
 
-  // 현재 사용자가 매칭 완료된 방에 참여하고 있는지 확인
-  const hasMatchedRoom = rooms.some(room => {
+  // 현재 사용자가 다른 점심 활동에 참여 중인지 확인 (매칭 대기/방 참여/그룹 완료)
+  const isBlocked = activeStatus?.active === true
+  
+  // 현재 사용자가 매칭 완료된 방에 참여하고 있는지 확인 (기존 호환용)
+  const hasMatchedRoom = isBlocked || rooms.some(room => {
     const isFull = room.status === 'full' || room.members.length >= room.maxCount
     const isJoined = room.members.some(m => m.id === currentUser.id)
     return isFull && isJoined
@@ -234,8 +255,28 @@ export default function Rooms({ currentUser, refreshUser }) {
         )}
       </div>
 
-      {/* 매칭 완료 안내 */}
-      {hasMatchedRoom && (
+      {/* 상태별 안내 메시지 */}
+      {activeStatus?.active && activeStatus.type === 'waiting' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+          <p className="text-blue-700 font-medium">
+            ⏳ 점심 매칭이 진행 중입니다!
+          </p>
+          <p className="text-blue-600 text-sm mt-1">
+            매칭 진행 중에는 다른 방에 참여할 수 없습니다.
+          </p>
+        </div>
+      )}
+      {activeStatus?.active && activeStatus.type === 'room' && (
+        <div className="bg-sky-50 border border-sky-200 rounded-xl p-4 text-center">
+          <p className="text-sky-700 font-medium">
+            🏠 이미 참여 중인 점심방이 있습니다!
+          </p>
+          <p className="text-sky-600 text-sm mt-1">
+            다른 방 참여 및 방 만들기가 비활성화됩니다.
+          </p>
+        </div>
+      )}
+      {(activeStatus?.active && activeStatus.type === 'group') || (!activeStatus?.active && hasMatchedRoom) ? (
         <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
           <p className="text-green-700 font-medium">
             🎉 오늘 점심 매칭이 완료되었습니다!
@@ -244,7 +285,7 @@ export default function Rooms({ currentUser, refreshUser }) {
             다른 방 참여 및 방 만들기가 비활성화됩니다.
           </p>
         </div>
-      )}
+      ) : null}
 
       {/* Rooms List */}
       {rooms.length === 0 ? (
@@ -288,7 +329,7 @@ export default function Rooms({ currentUser, refreshUser }) {
                     getLevelInfo={getLevelInfo}
                     menuLabels={menuLabels}
                     priceLabels={priceLabels}
-                    hasMatchedRoom={hasMatchedRoom}
+                    activeStatus={activeStatus}
                   />
                 ))
               }
@@ -314,7 +355,7 @@ export default function Rooms({ currentUser, refreshUser }) {
                     getLevelInfo={getLevelInfo}
                     menuLabels={menuLabels}
                     priceLabels={priceLabels}
-                    hasMatchedRoom={hasMatchedRoom}
+                    activeStatus={activeStatus}
                   />
                 ))
               }
