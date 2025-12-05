@@ -1,5 +1,85 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+// ============ 인증 헬퍼 ============
+function getAuthHeader() {
+  const token = localStorage.getItem('token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+// ============ 인증 API ============
+
+// 회원가입
+export async function register(data) {
+  const res = await fetch(`${API_BASE}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.detail || '회원가입에 실패했습니다');
+  }
+  return result;
+}
+
+// 로그인
+export async function login(username, password) {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.detail || '로그인에 실패했습니다');
+  }
+  // 토큰 저장
+  localStorage.setItem('token', result.token);
+  localStorage.setItem('user', JSON.stringify(result.user));
+  return result;
+}
+
+// 로그아웃
+export async function logout() {
+  try {
+    await fetch(`${API_BASE}/auth/logout`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
+    });
+  } catch (err) {
+    console.error('Logout error:', err);
+  }
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+}
+
+// 현재 사용자 정보
+export async function getMe() {
+  const res = await fetch(`${API_BASE}/auth/me`, {
+    headers: getAuthHeader(),
+  });
+  if (!res.ok) {
+    throw new Error('인증이 필요합니다');
+  }
+  return res.json();
+}
+
+// 저장된 사용자 정보 가져오기
+export function getStoredUser() {
+  const userStr = localStorage.getItem('user');
+  return userStr ? JSON.parse(userStr) : null;
+}
+
+// 로그인 상태 확인
+export function isLoggedIn() {
+  return !!localStorage.getItem('token');
+}
+
+// ============ 통계 API ============
+
 // 통계
 export async function getStats() {
   const res = await fetch(`${API_BASE}/stats`);

@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 import uuid
 import random
+import hashlib
 
 app = FastAPI(
     title="🍱 LunchMate API",
@@ -26,6 +27,10 @@ waiting_users: list = []
 groups: list = []
 rooms: list = []
 
+# 회원 데이터 저장소
+registered_users: list = []  # 가입된 회원들
+sessions: dict = {}  # 세션 토큰 -> 유저 ID 매핑
+
 # 샘플 식당 데이터
 restaurants = [
     {"id": "r1", "name": "김밥천국", "type": "korean", "price": "low", "distance": 3, "rating": 4.2},
@@ -42,14 +47,118 @@ restaurants = [
     {"id": "r12", "name": "파스타앤코", "type": "western", "price": "high", "distance": 9, "rating": 4.5},
 ]
 
-# 샘플 유저 데이터
-users = [
-    {"id": "demo1", "name": "김철수", "department": "AI팀", "gender": "male", "age": 28, "level": "junior"},
-    {"id": "demo2", "name": "이영희", "department": "개발팀", "gender": "female", "age": 32, "level": "senior"},
-    {"id": "demo3", "name": "박지민", "department": "디자인팀", "gender": "female", "age": 26, "level": "junior"},
-    {"id": "demo4", "name": "최동욱", "department": "마케팅팀", "gender": "male", "age": 35, "level": "manager"},
-    {"id": "demo5", "name": "정수현", "department": "컨설팅팀", "gender": "female", "age": 29, "level": "senior"},
-]
+# ============ Pydantic 모델 - 인증 ============
+class RegisterRequest(BaseModel):
+    username: str
+    password: str
+    name: str
+    department: str
+    level: str  # junior, senior, manager
+    gender: str  # male, female
+    age: int
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+# ============ 인증 헬퍼 함수 ============
+def hash_password(password: str) -> str:
+    """비밀번호 해시"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def generate_token() -> str:
+    """세션 토큰 생성"""
+    return str(uuid.uuid4())
+
+def get_current_user(authorization: str = Header(None)):
+    """현재 로그인한 유저 조회"""
+    if not authorization:
+        return None
+    
+    token = authorization.replace("Bearer ", "")
+    user_id = sessions.get(token)
+    if not user_id:
+        return None
+    
+    user = next((u for u in registered_users if u["id"] == user_id), None)
+    return user
+
+# ============ 인증 API ============
+@app.post("/auth/register")
+def register(request: RegisterRequest):
+    """회원가입"""
+    # 아이디 중복 체크
+    if any(u["username"] == request.username for u in registered_users):
+        raise HTTPException(status_code=400, detail="이미 존재하는 아이디입니다")
+    
+    # 새 유저 생성
+    new_user = {
+        "id": str(uuid.uuid4()),
+        "username": request.username,
+        "password": hash_password(request.password),
+        "name": request.name,
+        "department": request.department,
+        "level": request.level,
+        "gender": request.gender,
+        "age": request.age,
+        "createdAt": datetime.now().isoformat(),
+    }
+    registered_users.append(new_user)
+    
+    # 비밀번호 제외하고 반환
+    return {
+        "success": True,
+        "user": {k: v for k, v in new_user.items() if k != "password"}
+    }
+
+@app.post("/auth/login")
+def login(request: LoginRequest):
+    """로그인"""
+    # 유저 찾기
+    user = next(
+        (u for u in registered_users 
+         if u["username"] == request.username 
+         and u["password"] == hash_password(request.password)),
+        None
+    )
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 틀렸습니다")
+    
+    # 기존 세션 제거 (동일 유저의 다른 세션)
+    sessions_to_remove = [token for token, uid in sessions.items() if uid == user["id"]]
+    for token in sessions_to_remove:
+        del sessions[token]
+    
+    # 새 세션 생성
+    token = generate_token()
+    sessions[token] = user["id"]
+    
+    # 비밀번호 제외하고 반환
+    return {
+        "success": True,
+        "token": token,
+        "user": {k: v for k, v in user.items() if k != "password"}
+    }
+
+@app.post("/auth/logout")
+def logout(authorization: str = Header(None)):
+    """로그아웃"""
+    if authorization:
+        token = authorization.replace("Bearer ", "")
+        if token in sessions:
+            del sessions[token]
+    return {"success": True}
+
+@app.get("/auth/me")
+def get_me(authorization: str = Header(None)):
+    """현재 로그인한 유저 정보"""
+    user = get_current_user(authorization)
+    if not user:
+        raise HTTPException(status_code=401, detail="로그인이 필요합니다")
+    
+    # 비밀번호 제외하고 반환
+    return {k: v for k, v in user.items() if k != "password"}
 
 # ============ Pydantic 모델 ============
 class Preferences(BaseModel):
