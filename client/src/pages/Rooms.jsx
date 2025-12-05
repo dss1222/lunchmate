@@ -180,21 +180,16 @@ export default function Rooms({ currentUser, refreshUser }) {
   async function handleJoin(roomId) {
     setJoining(roomId)
     try {
-      const result = await joinRoom(roomId, {
+      await joinRoom(roomId, {
         userId: currentUser.id,
         name: currentUser.name,
         department: currentUser.department,
         matchCount: currentUser.matchCount || 0,
       })
-
-      if (result.error) {
-        alert(result.error)
-      } else {
-        navigate(`/rooms/${roomId}`)
-      }
+      navigate(`/rooms/${roomId}`)
     } catch (err) {
       console.error('Join error:', err)
-      alert('참여에 실패했습니다')
+      alert(err.message || '참여에 실패했습니다')
     } finally {
       setJoining(null)
     }

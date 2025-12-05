@@ -37,6 +37,15 @@ class RoomService:
                     creator_department: str, creator_match_count: int = 0,
                     restaurant_info: dict = None) -> dict:
         """점심방 생성"""
+        # 이미 참여 중인 점심 활동이 있는지 확인
+        active_status = data_store.is_user_in_active_lunch(creator_id)
+        if active_status["active"]:
+            type_name = {"room": "점심방", "group": "매칭 그룹", "waiting": "매칭 대기"}
+            raise HTTPException(
+                status_code=400, 
+                detail=f"이미 {type_name.get(active_status['type'], '점심 활동')}에 참여 중입니다. 먼저 나가기를 해주세요."
+            )
+        
         # 사용자가 선택한 식당이 있으면 그것을 사용, 없으면 None
         restaurant = restaurant_info if restaurant_info else None
         
@@ -70,6 +79,15 @@ class RoomService:
         
         if any(m["id"] == user_id for m in room["members"]):
             raise HTTPException(status_code=400, detail="Already joined")
+        
+        # 이미 다른 점심 활동에 참여 중인지 확인
+        active_status = data_store.is_user_in_active_lunch(user_id)
+        if active_status["active"]:
+            type_name = {"room": "점심방", "group": "매칭 그룹", "waiting": "매칭 대기"}
+            raise HTTPException(
+                status_code=400, 
+                detail=f"이미 {type_name.get(active_status['type'], '점심 활동')}에 참여 중입니다. 먼저 나가기를 해주세요."
+            )
         
         room["members"].append({
             "id": user_id or generate_id(),

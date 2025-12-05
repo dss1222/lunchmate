@@ -1,7 +1,7 @@
 // 개발: vite proxy 사용 (/api -> localhost:3001)
 // 배포: vercel rewrites 사용 (/api -> render backend)
 // VITE_API_URL이 설정되어 있으면 직접 호출
-const API_BASE = 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 // ============ 인증 헬퍼 ============
 function getAuthHeader() {
@@ -152,7 +152,11 @@ export async function createRoom(data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  return res.json();
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.detail || '방 생성에 실패했습니다');
+  }
+  return result;
 }
 
 // 점심방 참여
@@ -162,7 +166,11 @@ export async function joinRoom(roomId, userData) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(userData),
   });
-  return res.json();
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.detail || '방 참여에 실패했습니다');
+  }
+  return result;
 }
 
 // 점심방 나가기

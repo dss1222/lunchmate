@@ -4,7 +4,7 @@
 """
 from typing import Optional, List
 from datetime import datetime
-from ..core.utils import generate_id
+from ..core.utils import generate_id, hash_password
 
 
 class DataStore:
@@ -19,6 +19,40 @@ class DataStore:
         self._waiting_users: List[dict] = []
         self._groups: List[dict] = []
         self._rooms: List[dict] = []
+        
+        # 기본 테스트 계정 생성
+        self._create_default_users()
+    
+    def _create_default_users(self):
+        """서버 시작 시 기본 테스트 계정 생성"""
+        default_users = [
+            {"username": "test1", "password": "test1", "name": "김민준", "department": "보안사업본부", "level": "staff", "gender": "male", "age": 28},
+            {"username": "test2", "password": "test2", "name": "이서연", "department": "미래보안사업본부", "level": "assistant", "gender": "female", "age": 31},
+            {"username": "test3", "password": "test3", "name": "박지호", "department": "기획실", "level": "manager", "gender": "male", "age": 35},
+            {"username": "test4", "password": "test4", "name": "최수빈", "department": "보안기술연구소", "level": "staff", "gender": "female", "age": 26},
+            {"username": "test5", "password": "test5", "name": "정우진", "department": "품질관리부", "level": "deputy", "gender": "male", "age": 42},
+            {"username": "test6", "password": "test6", "name": "강예린", "department": "인사부", "level": "intern", "gender": "female", "age": 24},
+            {"username": "test7", "password": "test7", "name": "윤도현", "department": "재경부", "level": "general", "gender": "male", "age": 48},
+            {"username": "test8", "password": "test8", "name": "임하은", "department": "보안사업본부", "level": "assistant", "gender": "female", "age": 29},
+            {"username": "test9", "password": "test9", "name": "한승우", "department": "미래보안사업본부", "level": "manager", "gender": "male", "age": 37},
+            {"username": "test10", "password": "test10", "name": "오지유", "department": "보안기술연구소", "level": "staff", "gender": "female", "age": 27},
+        ]
+        
+        for user_data in default_users:
+            self._users.append({
+                "id": generate_id(),
+                "username": user_data["username"],
+                "password": hash_password(user_data["password"]),
+                "name": user_data["name"],
+                "department": user_data["department"],
+                "level": user_data["level"],
+                "gender": user_data["gender"],
+                "age": user_data["age"],
+                "matchCount": 0,
+                "createdAt": datetime.now().isoformat(),
+            })
+        
+        print(f"✅ 기본 테스트 계정 {len(default_users)}개 생성 완료")
     
     # ============ 레벨 시스템 ============
     @staticmethod
@@ -197,6 +231,49 @@ class DataStore:
             r for r in self._rooms
             if any(m.get("id") == user_id for m in r.get("members", []))
         ]
+    
+    def get_user_active_room(self, user_id: str) -> Optional[dict]:
+        """유저가 참여 중인 활성 방 조회 (오늘 날짜 기준)"""
+        from datetime import date
+        today = date.today().isoformat()
+        for room in self._rooms:
+            if not room.get("createdAt", "").startswith(today):
+                continue
+            for member in room.get("members", []):
+                if member.get("id") == user_id:
+                    return room
+        return None
+    
+    def get_user_active_group(self, user_id: str) -> Optional[dict]:
+        """유저가 참여 중인 활성 그룹 조회 (오늘 날짜 기준)"""
+        from datetime import date
+        today = date.today().isoformat()
+        for group in self._groups:
+            if not group.get("createdAt", "").startswith(today):
+                continue
+            for member in group.get("members", []):
+                if member.get("id") == user_id or member.get("userId") == user_id:
+                    return group
+        return None
+    
+    def is_user_in_active_lunch(self, user_id: str) -> dict:
+        """유저가 이미 점심 활동 중인지 확인 (방/그룹/매칭대기)"""
+        # 오늘 날짜의 활성 방 체크
+        active_room = self.get_user_active_room(user_id)
+        if active_room:
+            return {"active": True, "type": "room", "data": active_room}
+        
+        # 오늘 날짜의 활성 그룹 체크
+        active_group = self.get_user_active_group(user_id)
+        if active_group:
+            return {"active": True, "type": "group", "data": active_group}
+        
+        # 매칭 대기열 체크
+        waiting = self.get_waiting_user_by_user_id(user_id)
+        if waiting:
+            return {"active": True, "type": "waiting", "data": waiting}
+        
+        return {"active": False, "type": None, "data": None}
     
     def get_room_by_id(self, room_id: str) -> Optional[dict]:
         """ID로 점심방 조회"""

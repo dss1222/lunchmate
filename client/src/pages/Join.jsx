@@ -69,6 +69,14 @@ export default function Join({ currentUser }) {
 
       if (result.status === 'matched') {
         navigate(`/result?groupId=${result.groupId}`)
+      } else if (result.status === 'already_active') {
+        // 이미 참여 중인 점심 활동이 있는 경우
+        alert(result.message)
+        if (result.activeType === 'room') {
+          navigate(`/rooms/${result.activeId}`)
+        } else if (result.activeType === 'group') {
+          navigate(`/result?groupId=${result.activeId}`)
+        }
       } else {
         navigate(`/matching?matchRequestId=${result.matchRequestId}`, {
           state: { formData }
@@ -76,7 +84,7 @@ export default function Join({ currentUser }) {
       }
     } catch (err) {
       console.error('Join error:', err)
-      alert('오류가 발생했습니다. 다시 시도해주세요.')
+      alert(err.message || '오류가 발생했습니다. 다시 시도해주세요.')
     } finally {
       setLoading(false)
     }

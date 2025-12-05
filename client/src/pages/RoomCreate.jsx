@@ -187,7 +187,7 @@ export default function RoomCreate({ currentUser }) {
       navigate(`/rooms/${room.id}`)
     } catch (err) {
       console.error('Create room error:', err)
-      alert('방 생성에 실패했습니다')
+      alert(err.message || '방 생성에 실패했습니다')
     } finally {
       setLoading(false)
     }
