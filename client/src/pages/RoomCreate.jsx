@@ -19,10 +19,11 @@ const menuCategories = [
   { id: 'snack', name: '분식', emoji: '🍜', keyword: '분식' },
 ]
 
-const sortOptions = [
-  { id: 'distance', label: '거리순', icon: '📍' },
-  { id: 'accuracy', label: '정확도순', icon: '🎯' },
-]
+// 정렬 옵션 - 현재 사용 안함
+// const sortOptions = [
+//   { id: 'distance', label: '거리순', icon: '📍' },
+//   { id: 'accuracy', label: '정확도순', icon: '🎯' },
+// ]
 
 const maxCountOptions = [2, 3, 4, 5, 6]
 
@@ -284,8 +285,8 @@ export default function RoomCreate({ currentUser }) {
             </div>
           </div>
 
-          {/* 정렬 옵션 */}
-          <div className="flex gap-2 mb-4">
+          {/* 정렬 옵션 - 현재 사용 안함 */}
+          {/* <div className="flex gap-2 mb-4">
             {sortOptions.map(option => (
               <button
                 key={option.id}
@@ -300,7 +301,7 @@ export default function RoomCreate({ currentUser }) {
                 <span>{option.label}</span>
               </button>
             ))}
-          </div>
+          </div> */}
           
           {restaurantsLoading ? (
             <div className="flex items-center justify-center py-8">
