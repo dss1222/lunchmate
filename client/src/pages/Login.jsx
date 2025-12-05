@@ -46,7 +46,7 @@ export default function Login({ onLogin }) {
       {/* Logo */}
       <div className="text-center mb-8">
         <div className="text-6xl mb-4">🍱</div>
-        <h1 className="text-3xl font-bold gradient-text">LunchMate</h1>
+        <h1 className="text-3xl font-bold gradient-text game-font">LunchMate</h1>
         <p className="text-gray-500 mt-2">혼밥 탈출! 같이 점심 먹을 사람 찾기</p>
       </div>
 
@@ -69,7 +69,7 @@ export default function Login({ onLogin }) {
               value={formData.username}
               onChange={handleChange}
               placeholder="아이디를 입력하세요"
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
             />
           </div>
 
@@ -81,14 +81,14 @@ export default function Login({ onLogin }) {
               value={formData.password}
               onChange={handleChange}
               placeholder="비밀번호를 입력하세요"
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-bold rounded-xl shadow-lg shadow-primary-200 btn-press disabled:opacity-50"
+            className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 btn-press disabled:opacity-50"
           >
             {loading ? '로그인 중...' : '로그인'}
           </button>
@@ -97,7 +97,7 @@ export default function Login({ onLogin }) {
         <div className="text-center mt-6">
           <p className="text-gray-500">
             아직 계정이 없으신가요?{' '}
-            <Link to="/register" className="text-primary-600 font-medium hover:underline">
+            <Link to="/register" className="text-blue-600 font-medium hover:underline">
               회원가입
             </Link>
           </p>

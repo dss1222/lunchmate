@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getStats } from '../api'
+import { getStats, getMyRooms } from '../api'
+
+const menuLabels = {
+  korean: { name: '한식', emoji: '🍚' },
+  japanese: { name: '일식', emoji: '🍣' },
+  chinese: { name: '중식', emoji: '🥟' },
+  western: { name: '양식', emoji: '🍝' },
+  salad: { name: '샐러드', emoji: '🥗' },
+  snack: { name: '분식', emoji: '🍜' },
+}
 
 const menuCategories = [
   { id: 'korean', name: '한식', emoji: '🍚' },
@@ -28,13 +37,18 @@ const getLevelInfo = (matchCount) => {
 
 export default function Home({ currentUser, refreshUser }) {
   const [stats, setStats] = useState(null)
+  const [myRooms, setMyRooms] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchStats()
-    const interval = setInterval(fetchStats, 5000)
+    fetchMyRooms()
+    const interval = setInterval(() => {
+      fetchStats()
+      fetchMyRooms()
+    }, 5000)
     return () => clearInterval(interval)
-  }, [])
+  }, [currentUser?.id])
 
   async function fetchStats() {
     try {
@@ -44,6 +58,16 @@ export default function Home({ currentUser, refreshUser }) {
       console.error('Stats fetch error:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function fetchMyRooms() {
+    if (!currentUser?.id) return
+    try {
+      const data = await getMyRooms(currentUser.id)
+      setMyRooms(data)
+    } catch (err) {
+      console.error('My rooms fetch error:', err)
     }
   }
 
@@ -59,6 +83,11 @@ export default function Home({ currentUser, refreshUser }) {
   // 현재 유저 레벨 정보
   const matchCount = currentUser?.matchCount || 0
   const levelInfo = getLevelInfo(matchCount)
+
+  // 매칭 완료된 방이 있는지 확인
+  const hasCompletedMatch = myRooms.some(room => 
+    room.status === 'full' || room.members.length >= room.maxCount
+  )
 
   return (
     <div className="space-y-6">
@@ -80,13 +109,78 @@ export default function Home({ currentUser, refreshUser }) {
         </p>
       </div>
 
+      {/* 오늘 내 점심방 */}
+      {myRooms.length > 0 && (
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 shadow-lg shadow-blue-200 text-white">
+          <h2 className="font-bold mb-3 flex items-center gap-2">
+            <span>🎉</span> 오늘 내 점심 매칭
+          </h2>
+          <div className="space-y-3">
+            {myRooms.map(room => {
+              const menuInfo = menuLabels[room.menu] || { name: room.menu, emoji: '🍽️' }
+              const isFull = room.status === 'full' || room.members.length >= room.maxCount
+              return (
+                <Link
+                  key={room.id}
+                  to={`/rooms/${room.id}`}
+                  className="block bg-white/20 hover:bg-white/30 rounded-xl p-4 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold">{room.title}</div>
+                      <div className="text-sm text-blue-100 flex items-center gap-2 mt-1">
+                        <span>{menuInfo.emoji} {menuInfo.name}</span>
+                        <span>·</span>
+                        <span>⏰ {room.timeSlot}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {isFull ? (
+                        <span className="px-3 py-1 bg-green-400 text-green-900 rounded-full text-xs font-bold">
+                          매칭 완료!
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 bg-yellow-400 text-yellow-900 rounded-full text-xs font-bold">
+                          {room.members.length}/{room.maxCount}명 대기중
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-3">
+                    <div className="flex -space-x-2">
+                      {room.members.slice(0, 4).map((member, idx) => (
+                        <div
+                          key={member.id || idx}
+                          className="w-7 h-7 rounded-full bg-white/30 flex items-center justify-center text-xs font-bold border-2 border-white/50"
+                        >
+                          {member.name?.[0] || '?'}
+                        </div>
+                      ))}
+                    </div>
+                    <span className="text-sm text-blue-100">
+                      {room.members.map(m => m.name).join(', ')}
+                    </span>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* CTA Button */}
-      <Link
-        to="/join"
-        className="block w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-2xl text-center text-lg shadow-lg shadow-blue-200 transition-all btn-press card-hover"
-      >
-        🙋‍♂️ 오늘 점심 참여하기
-      </Link>
+      {hasCompletedMatch ? (
+        <div className="block w-full bg-gray-300 text-gray-500 font-bold py-4 px-6 rounded-2xl text-center text-lg shadow-sm cursor-not-allowed">
+          ✅ 오늘 점심 매칭 완료
+        </div>
+      ) : (
+        <Link
+          to="/join"
+          className="block w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-2xl text-center text-lg shadow-lg shadow-blue-200 transition-all btn-press card-hover"
+        >
+          🙋‍♂️ 오늘 점심 참여하기
+        </Link>
+      )}
 
       {/* Level Progress Card */}
       <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
@@ -228,25 +322,45 @@ export default function Home({ currentUser, refreshUser }) {
           <span>📊</span> 쩝쩝박사 레벨 기준
         </h3>
         <div className="grid grid-cols-1 gap-2 text-sm">
-          <div className="flex items-center justify-between p-2 bg-white rounded-lg">
+          <div className={`flex items-center justify-between p-2 rounded-lg ${
+            levelInfo.level === 1 
+              ? 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200' 
+              : 'bg-white'
+          }`}>
             <span className="flex items-center gap-2"><span>🌱</span> Lv.1 새싹</span>
-            <span className="text-gray-500">매칭 1회</span>
+            <span className={levelInfo.level === 1 ? 'text-blue-600 font-medium' : 'text-gray-500'}>매칭 1회</span>
           </div>
-          <div className="flex items-center justify-between p-2 bg-white rounded-lg">
+          <div className={`flex items-center justify-between p-2 rounded-lg ${
+            levelInfo.level === 2 
+              ? 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200' 
+              : 'bg-white'
+          }`}>
             <span className="flex items-center gap-2"><span>🍼</span> Lv.2 먹린이</span>
-            <span className="text-gray-500">매칭 2~5회</span>
+            <span className={levelInfo.level === 2 ? 'text-blue-600 font-medium' : 'text-gray-500'}>매칭 2~5회</span>
           </div>
-          <div className="flex items-center justify-between p-2 bg-white rounded-lg">
+          <div className={`flex items-center justify-between p-2 rounded-lg ${
+            levelInfo.level === 3 
+              ? 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200' 
+              : 'bg-white'
+          }`}>
             <span className="flex items-center gap-2"><span>🍽️</span> Lv.3 미식가</span>
-            <span className="text-gray-500">매칭 6~15회</span>
+            <span className={levelInfo.level === 3 ? 'text-blue-600 font-medium' : 'text-gray-500'}>매칭 6~15회</span>
           </div>
-          <div className="flex items-center justify-between p-2 bg-white rounded-lg">
+          <div className={`flex items-center justify-between p-2 rounded-lg ${
+            levelInfo.level === 4 
+              ? 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200' 
+              : 'bg-white'
+          }`}>
             <span className="flex items-center gap-2"><span>🏆</span> Lv.4 먹고수</span>
-            <span className="text-gray-500">매칭 16~30회</span>
+            <span className={levelInfo.level === 4 ? 'text-blue-600 font-medium' : 'text-gray-500'}>매칭 16~30회</span>
           </div>
-          <div className="flex items-center justify-between p-2 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+          <div className={`flex items-center justify-between p-2 rounded-lg ${
+            levelInfo.level === 5 
+              ? 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200' 
+              : 'bg-white'
+          }`}>
             <span className="flex items-center gap-2"><span>👑</span> Lv.5 쩝쩝박사 마스터</span>
-            <span className="text-blue-600 font-medium">매칭 31회+</span>
+            <span className={levelInfo.level === 5 ? 'text-blue-600 font-medium' : 'text-gray-500'}>매칭 31회+</span>
           </div>
         </div>
       </div>

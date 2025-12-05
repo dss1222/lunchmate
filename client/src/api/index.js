@@ -133,6 +133,12 @@ export async function getRooms() {
   return res.json();
 }
 
+// 내 점심방 목록
+export async function getMyRooms(userId) {
+  const res = await fetch(`${API_BASE}/rooms/my/${userId}`);
+  return res.json();
+}
+
 // 점심방 상세
 export async function getRoom(roomId) {
   const res = await fetch(`${API_BASE}/rooms/${roomId}`);

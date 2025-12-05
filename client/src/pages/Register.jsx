@@ -118,17 +118,17 @@ export default function Register() {
       {/* Logo */}
       <div className="text-center mb-6">
         <div className="text-5xl mb-2">🍱</div>
-        <h1 className="text-2xl font-bold gradient-text">LunchMate</h1>
+        <h1 className="text-2xl font-bold gradient-text game-font">LunchMate</h1>
       </div>
 
       {/* Progress */}
       <div className="flex items-center gap-2 mb-6">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-          step >= 1 ? 'bg-primary-500 text-white' : 'bg-gray-200 text-gray-500'
+          step >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'
         }`}>1</div>
-        <div className={`w-12 h-1 ${step >= 2 ? 'bg-primary-500' : 'bg-gray-200'}`}></div>
+        <div className={`w-12 h-1 ${step >= 2 ? 'bg-blue-500' : 'bg-gray-200'}`}></div>
         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-          step >= 2 ? 'bg-primary-500 text-white' : 'bg-gray-200 text-gray-500'
+          step >= 2 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'
         }`}>2</div>
       </div>
 
@@ -153,7 +153,7 @@ export default function Register() {
                 value={formData.username}
                 onChange={handleChange}
                 placeholder="4자 이상 입력"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
@@ -165,7 +165,7 @@ export default function Register() {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="4자 이상 입력"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
@@ -177,13 +177,13 @@ export default function Register() {
                 value={formData.passwordConfirm}
                 onChange={handleChange}
                 placeholder="비밀번호를 다시 입력"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-bold rounded-xl shadow-lg shadow-primary-200 btn-press"
+              className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 btn-press"
             >
               다음 →
             </button>
@@ -207,7 +207,7 @@ export default function Register() {
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="실명을 입력하세요"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
@@ -217,7 +217,7 @@ export default function Register() {
                 name="department"
                 value={formData.department}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
               >
                 <option value="">부서 선택</option>
                 {departments.map(dept => (
@@ -232,7 +232,7 @@ export default function Register() {
                 name="level"
                 value={formData.level}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
               >
                 <option value="">직급 선택</option>
                 {levels.map(level => (
@@ -248,7 +248,7 @@ export default function Register() {
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
                 >
                   <option value="">선택</option>
                   {genders.map(g => (
@@ -266,7 +266,7 @@ export default function Register() {
                   placeholder="만 나이"
                   min="18"
                   max="100"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
               </div>
             </div>
@@ -282,7 +282,7 @@ export default function Register() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 py-4 bg-gradient-to-r from-accent-500 to-accent-600 text-white font-bold rounded-xl shadow-lg shadow-accent-200 btn-press disabled:opacity-50"
+                className="flex-1 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 btn-press disabled:opacity-50"
               >
                 {loading ? '가입 중...' : '가입하기'}
               </button>
@@ -293,7 +293,7 @@ export default function Register() {
         <div className="text-center mt-6">
           <p className="text-gray-500">
             이미 계정이 있으신가요?{' '}
-            <Link to="/login" className="text-primary-600 font-medium hover:underline">
+            <Link to="/login" className="text-blue-600 font-medium hover:underline">
               로그인
             </Link>
           </p>
