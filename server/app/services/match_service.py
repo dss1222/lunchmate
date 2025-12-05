@@ -206,17 +206,53 @@ class MatchService:
                     data_store.increment_match_count(member["userId"])
             
             # 그룹 생성
+            restaurant = get_recommended_restaurant(menu, price_range)
             group = data_store.create_group({
                 "members": group_members,
                 "timeSlot": time_slot,
                 "priceRange": price_range,
                 "menu": menu,
-                "restaurant": get_recommended_restaurant(menu, price_range),
+                "restaurant": restaurant,
+            })
+            
+            # 매칭 완료 시 자동으로 점심방도 생성
+            room_members = [
+                {
+                    "id": m.get("userId"),
+                    "name": m.get("name"),
+                    "department": m.get("department"),
+                    "level": m.get("level"),
+                }
+                for m in group_members
+                if m.get("userId")
+            ]
+            
+            menu_names = {
+                "korean": "한식",
+                "japanese": "일식", 
+                "chinese": "중식",
+                "western": "양식",
+                "salad": "샐러드",
+                "snack": "분식",
+            }
+            
+            room = data_store.create_room({
+                "title": f"{menu_names.get(menu, menu)} 점심 모임",
+                "timeSlot": time_slot,
+                "priceRange": price_range,
+                "menu": menu,
+                "maxCount": len(room_members),
+                "members": room_members,
+                "restaurant": restaurant,
+                "status": "full",  # 매칭 완료된 방
+                "isAutoMatched": True,  # 자동 매칭으로 생성된 방
+                "groupId": group["id"],  # 연결된 그룹 ID
             })
             
             return {
                 "status": "matched",
                 "groupId": group["id"],
+                "roomId": room["id"],
                 "matchRequest": match_request,
             }
         
@@ -270,18 +306,54 @@ class MatchService:
                     data_store.increment_match_count(member["userId"])
             
             # 그룹 생성
+            restaurant = get_recommended_restaurant(in_waiting["menu"], in_waiting["priceRange"])
             group = data_store.create_group({
                 "members": group_members,
                 "timeSlot": in_waiting["timeSlot"],
                 "priceRange": in_waiting["priceRange"],
                 "menu": in_waiting["menu"],
-                "restaurant": get_recommended_restaurant(in_waiting["menu"], in_waiting["priceRange"]),
+                "restaurant": restaurant,
                 "relaxationApplied": relaxation_level > 0,
+            })
+            
+            # 매칭 완료 시 자동으로 점심방도 생성
+            room_members = [
+                {
+                    "id": m.get("userId"),
+                    "name": m.get("name"),
+                    "department": m.get("department"),
+                    "level": m.get("level"),
+                }
+                for m in group_members
+                if m.get("userId")
+            ]
+            
+            menu_names = {
+                "korean": "한식",
+                "japanese": "일식", 
+                "chinese": "중식",
+                "western": "양식",
+                "salad": "샐러드",
+                "snack": "분식",
+            }
+            
+            room = data_store.create_room({
+                "title": f"{menu_names.get(in_waiting['menu'], in_waiting['menu'])} 점심 모임",
+                "timeSlot": in_waiting["timeSlot"],
+                "priceRange": in_waiting["priceRange"],
+                "menu": in_waiting["menu"],
+                "maxCount": len(room_members),
+                "members": room_members,
+                "restaurant": restaurant,
+                "status": "full",  # 매칭 완료된 방
+                "isAutoMatched": True,  # 자동 매칭으로 생성된 방
+                "groupId": group["id"],  # 연결된 그룹 ID
             })
             
             return {
                 "status": "matched",
                 "groupId": group["id"],
+                "roomId": room["id"],
                 "relaxationLevel": relaxation_level,
             }
         
