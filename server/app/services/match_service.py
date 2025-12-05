@@ -149,6 +149,26 @@ class MatchService:
                    menu: str, preferences: dict) -> dict:
         """매칭 참여"""
         
+        # 이미 참여 중인 점심 활동이 있는지 확인 (방 또는 완료된 그룹)
+        if user_id:
+            active_room = data_store.get_user_active_room(user_id)
+            if active_room:
+                return {
+                    "status": "already_active",
+                    "message": "이미 점심방에 참여 중입니다. 먼저 나가기를 해주세요.",
+                    "activeType": "room",
+                    "activeId": active_room["id"],
+                }
+            
+            active_group = data_store.get_user_active_group(user_id)
+            if active_group:
+                return {
+                    "status": "already_active",
+                    "message": "이미 매칭이 완료된 그룹이 있습니다.",
+                    "activeType": "group",
+                    "activeId": active_group["id"],
+                }
+        
         # 동일 userId의 기존 매칭 요청 제거 (중복 참여 방지)
         if user_id:
             data_store.remove_waiting_user_by_user_id(user_id)

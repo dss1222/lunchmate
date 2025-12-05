@@ -152,7 +152,11 @@ export async function createRoom(data) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  return res.json();
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.detail || '방 생성에 실패했습니다');
+  }
+  return result;
 }
 
 // 점심방 참여
@@ -162,7 +166,11 @@ export async function joinRoom(roomId, userData) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(userData),
   });
-  return res.json();
+  const result = await res.json();
+  if (!res.ok) {
+    throw new Error(result.detail || '방 참여에 실패했습니다');
+  }
+  return result;
 }
 
 // 점심방 나가기
