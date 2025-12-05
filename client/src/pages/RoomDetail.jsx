@@ -17,7 +17,22 @@ const priceLabels = {
   high: '1.2만 이상',
 }
 
-export default function RoomDetail({ currentUser }) {
+// 쩝쩝박사 레벨 정보
+const getLevelInfo = (matchCount) => {
+  if (matchCount >= 31) {
+    return { level: 5, name: '쩝쩝박사 마스터', emoji: '👑', color: 'level-5' }
+  } else if (matchCount >= 16) {
+    return { level: 4, name: '먹고수', emoji: '🏆', color: 'level-4' }
+  } else if (matchCount >= 6) {
+    return { level: 3, name: '미식가', emoji: '🍽️', color: 'level-3' }
+  } else if (matchCount >= 2) {
+    return { level: 2, name: '먹린이', emoji: '🍼', color: 'level-2' }
+  } else {
+    return { level: 1, name: '새싹', emoji: '🌱', color: 'level-1' }
+  }
+}
+
+export default function RoomDetail({ currentUser, refreshUser }) {
   const navigate = useNavigate()
   const { roomId } = useParams()
 
@@ -25,6 +40,7 @@ export default function RoomDetail({ currentUser }) {
   const [loading, setLoading] = useState(true)
   const [leaving, setLeaving] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [wasFullBefore, setWasFullBefore] = useState(false)
 
   useEffect(() => {
     fetchRoom()
@@ -39,6 +55,14 @@ export default function RoomDetail({ currentUser }) {
         navigate('/rooms')
         return
       }
+      
+      // 방이 가득 찼을 때 사용자 정보 새로고침 (매칭 횟수 반영)
+      const isFull = data.members?.length >= data.maxCount
+      if (isFull && !wasFullBefore && refreshUser) {
+        refreshUser()
+        setWasFullBefore(true)
+      }
+      
       setRoom(data)
     } catch (err) {
       console.error('Room fetch error:', err)
@@ -95,7 +119,7 @@ export default function RoomDetail({ currentUser }) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">방을 찾을 수 없습니다</p>
-        <button onClick={() => navigate('/rooms')} className="mt-4 text-primary-500">
+        <button onClick={() => navigate('/rooms')} className="mt-4 text-blue-500">
           점심방 목록으로
         </button>
       </div>
@@ -114,7 +138,7 @@ export default function RoomDetail({ currentUser }) {
         <button onClick={() => navigate('/rooms')} className="text-2xl">←</button>
         <h1 className="text-xl font-bold flex-1 truncate">{room.title}</h1>
         {isCreator && (
-          <span className="text-xs bg-primary-100 text-primary-600 px-2 py-1 rounded-full">
+          <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
             방장
           </span>
         )}
@@ -122,7 +146,7 @@ export default function RoomDetail({ currentUser }) {
 
       {/* Status Banner */}
       {isFull && (
-        <div className="bg-gradient-to-r from-accent-500 to-accent-600 text-white rounded-2xl p-4 text-center">
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl p-4 text-center">
           <div className="text-2xl mb-1">🎉</div>
           <div className="font-bold">인원이 모두 모였어요!</div>
           <div className="text-sm opacity-90">약속 시간에 만나요</div>
@@ -130,30 +154,30 @@ export default function RoomDetail({ currentUser }) {
       )}
 
       {/* Room Info Card */}
-      <div className="bg-white/80 rounded-2xl p-5 shadow-sm">
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
         <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
             <span className="text-2xl">⏰</span>
             <div>
               <div className="text-xs text-gray-500">시간</div>
               <div className="font-medium text-gray-800">{room.timeSlot}</div>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
             <span className="text-2xl">{menuInfo.emoji}</span>
             <div>
               <div className="text-xs text-gray-500">메뉴</div>
               <div className="font-medium text-gray-800">{menuInfo.name}</div>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
             <span className="text-2xl">💰</span>
             <div>
               <div className="text-xs text-gray-500">가격대</div>
               <div className="font-medium text-gray-800">{priceLabels[room.priceRange]}</div>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+          <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
             <span className="text-2xl">👥</span>
             <div>
               <div className="text-xs text-gray-500">인원</div>
@@ -164,37 +188,45 @@ export default function RoomDetail({ currentUser }) {
       </div>
 
       {/* Members */}
-      <div className="bg-white/80 rounded-2xl p-5 shadow-sm">
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
         <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
           <span>👥</span> 참여자
         </h2>
         <div className="space-y-3">
-          {room.members.map((member, idx) => (
-            <div 
-              key={member.id || idx}
-              className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl"
-            >
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold">
-                {member.name?.[0] || '?'}
-              </div>
-              <div className="flex-1">
-                <div className="font-medium text-gray-800 flex items-center gap-2">
-                  {member.name}
-                  {member.isCreator && (
-                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">방장</span>
-                  )}
+          {room.members.map((member, idx) => {
+            const memberLevel = getLevelInfo(member.matchCount || 0)
+            return (
+              <div 
+                key={member.id || idx}
+                className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl"
+              >
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                  {member.name?.[0] || '?'}
                 </div>
-                <div className="text-sm text-gray-500">{member.department}</div>
+                <div className="flex-1">
+                  <div className="font-medium text-gray-800 flex items-center gap-2">
+                    {member.name}
+                    {member.isCreator && (
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">방장</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-sm text-gray-500">{member.department}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${memberLevel.color}`}>
+                      {memberLevel.emoji} Lv.{memberLevel.level}
+                    </span>
+                  </div>
+                </div>
+                {member.id === currentUser.id && (
+                  <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">나</span>
+                )}
               </div>
-              {member.id === currentUser.id && (
-                <span className="text-xs bg-primary-100 text-primary-600 px-2 py-1 rounded-full">나</span>
-              )}
-            </div>
-          ))}
+            )
+          })}
 
           {/* Empty Slots */}
           {Array.from({ length: room.maxCount - room.members.length }).map((_, idx) => (
-            <div key={`empty-${idx}`} className="flex items-center gap-3 p-3 bg-gray-50/50 rounded-xl border-2 border-dashed border-gray-200">
+            <div key={`empty-${idx}`} className="flex items-center gap-3 p-3 bg-slate-50/50 rounded-xl border-2 border-dashed border-gray-200">
               <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
                 ?
               </div>
@@ -206,7 +238,7 @@ export default function RoomDetail({ currentUser }) {
 
       {/* Restaurant */}
       {room.restaurant && (
-        <div className="bg-gradient-to-br from-accent-50 to-primary-50 rounded-2xl p-5 border border-accent-100">
+        <div className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-2xl p-5 border border-blue-100">
           <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
             <span>🍽️</span> 식당
           </h2>
@@ -219,9 +251,9 @@ export default function RoomDetail({ currentUser }) {
                 </p>
               </div>
               {room.restaurant.rating && (
-                <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded-lg">
-                  <span className="text-yellow-500">⭐</span>
-                  <span className="font-medium text-yellow-700">{room.restaurant.rating}</span>
+                <div className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded-lg">
+                  <span className="text-blue-500">⭐</span>
+                  <span className="font-medium text-blue-700">{room.restaurant.rating}</span>
                 </div>
               )}
             </div>
@@ -230,7 +262,7 @@ export default function RoomDetail({ currentUser }) {
       )}
 
       {/* Meeting Point */}
-      <div className="bg-primary-50 rounded-2xl p-5 border border-primary-100">
+      <div className="bg-blue-50 rounded-2xl p-5 border border-blue-100">
         <h2 className="font-bold text-gray-800 mb-2 flex items-center gap-2">
           <span>📍</span> 모임 장소
         </h2>
@@ -241,7 +273,7 @@ export default function RoomDetail({ currentUser }) {
       <div className="space-y-3">
         <button
           onClick={handleShare}
-          className="w-full py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-bold rounded-2xl shadow-lg shadow-primary-200 btn-press"
+          className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-200 btn-press"
         >
           {copied ? '✅ 복사됨!' : '📤 공유하기'}
         </button>
@@ -259,4 +291,3 @@ export default function RoomDetail({ currentUser }) {
     </div>
   )
 }
-

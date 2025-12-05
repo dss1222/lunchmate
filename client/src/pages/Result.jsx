@@ -17,7 +17,7 @@ const menuLabels = {
   snack: '분식',
 }
 
-export default function Result({ currentUser }) {
+export default function Result({ currentUser, refreshUser }) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const groupId = searchParams.get('groupId')
@@ -33,6 +33,10 @@ export default function Result({ currentUser }) {
     }
 
     fetchGroup()
+    // 매칭 완료 후 사용자 정보 새로고침 (매칭 횟수 반영)
+    if (refreshUser) {
+      refreshUser()
+    }
   }, [groupId])
 
   async function fetchGroup() {
@@ -79,7 +83,7 @@ export default function Result({ currentUser }) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">그룹 정보를 불러올 수 없습니다</p>
-        <button onClick={() => navigate('/')} className="mt-4 text-primary-500">
+        <button onClick={() => navigate('/')} className="mt-4 text-blue-500">
           홈으로 돌아가기
         </button>
       </div>
@@ -96,7 +100,7 @@ export default function Result({ currentUser }) {
       </div>
 
       {/* Members Card */}
-      <div className="bg-white/80 rounded-2xl p-5 shadow-sm">
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
         <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
           <span>👥</span> 참여자 ({group.members.length}명)
         </h2>
@@ -104,9 +108,9 @@ export default function Result({ currentUser }) {
           {group.members.map((member, idx) => (
             <div 
               key={member.id || idx}
-              className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl"
+              className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl"
             >
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-bold">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
                 {member.name?.[0] || '?'}
               </div>
               <div>
@@ -114,7 +118,7 @@ export default function Result({ currentUser }) {
                 <div className="text-sm text-gray-500">{member.department}</div>
               </div>
               {member.id === currentUser.id && (
-                <span className="ml-auto text-xs bg-primary-100 text-primary-600 px-2 py-1 rounded-full">
+                <span className="ml-auto text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
                   나
                 </span>
               )}
@@ -125,7 +129,7 @@ export default function Result({ currentUser }) {
 
       {/* Restaurant Recommendation */}
       {group.restaurant && (
-        <div className="bg-gradient-to-br from-accent-50 to-primary-50 rounded-2xl p-5 border border-accent-100">
+        <div className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-2xl p-5 border border-blue-100">
           <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
             <span>🍽️</span> 추천 식당
           </h2>
@@ -137,9 +141,9 @@ export default function Result({ currentUser }) {
                   도보 {group.restaurant.distance}분 · {priceLabels[group.restaurant.price]}
                 </p>
               </div>
-              <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded-lg">
-                <span className="text-yellow-500">⭐</span>
-                <span className="font-medium text-yellow-700">{group.restaurant.rating}</span>
+              <div className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded-lg">
+                <span className="text-blue-500">⭐</span>
+                <span className="font-medium text-blue-700">{group.restaurant.rating}</span>
               </div>
             </div>
           </div>
@@ -148,20 +152,20 @@ export default function Result({ currentUser }) {
 
       {/* Other Restaurants */}
       {group.recommendedRestaurants?.length > 1 && (
-        <div className="bg-white/80 rounded-2xl p-5 shadow-sm">
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
           <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
             <span>📋</span> 다른 추천 식당
           </h2>
           <div className="space-y-2">
             {group.recommendedRestaurants.slice(1).map(restaurant => (
-              <div key={restaurant.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+              <div key={restaurant.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
                 <div>
                   <div className="font-medium text-gray-700">{restaurant.name}</div>
                   <div className="text-xs text-gray-500">
                     도보 {restaurant.distance}분 · {priceLabels[restaurant.price]}
                   </div>
                 </div>
-                <div className="text-sm text-yellow-600">⭐ {restaurant.rating}</div>
+                <div className="text-sm text-blue-600">⭐ {restaurant.rating}</div>
               </div>
             ))}
           </div>
@@ -169,7 +173,7 @@ export default function Result({ currentUser }) {
       )}
 
       {/* Meeting Info */}
-      <div className="bg-primary-50 rounded-2xl p-5 border border-primary-100">
+      <div className="bg-blue-50 rounded-2xl p-5 border border-blue-100">
         <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
           <span>📍</span> 약속 정보
         </h2>
@@ -189,7 +193,7 @@ export default function Result({ currentUser }) {
       <div className="space-y-3">
         <button
           onClick={handleShare}
-          className="w-full py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-bold rounded-2xl shadow-lg shadow-primary-200 btn-press"
+          className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-200 btn-press"
         >
           {copied ? '✅ 복사됨!' : '📤 공유하기'}
         </button>
@@ -203,4 +207,3 @@ export default function Result({ currentUser }) {
     </div>
   )
 }
-

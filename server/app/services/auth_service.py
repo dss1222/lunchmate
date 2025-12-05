@@ -29,12 +29,18 @@ class AuthService:
             "level": level,
             "gender": gender,
             "age": age,
+            "matchCount": 0,  # 매칭 횟수 초기화
         })
+        
+        # 레벨 정보 추가
+        food_level = data_store.calculate_food_level(0)
+        user_data = {k: v for k, v in user.items() if k != "password"}
+        user_data["foodLevel"] = food_level
         
         # 비밀번호 제외하고 반환
         return {
             "success": True,
-            "user": {k: v for k, v in user.items() if k != "password"}
+            "user": user_data
         }
     
     @staticmethod
@@ -53,11 +59,18 @@ class AuthService:
         token = generate_token()
         data_store.create_session(token, user["id"])
         
+        # 레벨 정보 추가
+        match_count = user.get("matchCount", 0)
+        food_level = data_store.calculate_food_level(match_count)
+        user_data = {k: v for k, v in user.items() if k != "password"}
+        user_data["foodLevel"] = food_level
+        user_data["matchCount"] = match_count
+        
         # 비밀번호 제외하고 반환
         return {
             "success": True,
             "token": token,
-            "user": {k: v for k, v in user.items() if k != "password"}
+            "user": user_data
         }
     
     @staticmethod
@@ -77,10 +90,6 @@ class AuthService:
         if not user_id:
             return None
         
-        user = data_store.get_user_by_id(user_id)
-        if not user:
-            return None
-        
-        # 비밀번호 제외
-        return {k: v for k, v in user.items() if k != "password"}
+        # 레벨 정보 포함해서 반환
+        return data_store.get_user_with_level(user_id)
 

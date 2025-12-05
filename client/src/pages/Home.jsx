@@ -11,13 +11,28 @@ const menuCategories = [
   { id: 'snack', name: '분식', emoji: '🍜' },
 ]
 
-export default function Home({ currentUser }) {
+// 쩝쩝박사 레벨 정보
+const getLevelInfo = (matchCount) => {
+  if (matchCount >= 31) {
+    return { level: 5, name: '쩝쩝박사 마스터', emoji: '👑', nextAt: null, color: 'level-5' }
+  } else if (matchCount >= 16) {
+    return { level: 4, name: '먹고수', emoji: '🏆', nextAt: 31, color: 'level-4' }
+  } else if (matchCount >= 6) {
+    return { level: 3, name: '미식가', emoji: '🍽️', nextAt: 16, color: 'level-3' }
+  } else if (matchCount >= 2) {
+    return { level: 2, name: '먹린이', emoji: '🍼', nextAt: 6, color: 'level-2' }
+  } else {
+    return { level: 1, name: '새싹', emoji: '🌱', nextAt: 2, color: 'level-1' }
+  }
+}
+
+export default function Home({ currentUser, refreshUser }) {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchStats()
-    const interval = setInterval(fetchStats, 5000) // 5초마다 갱신
+    const interval = setInterval(fetchStats, 5000)
     return () => clearInterval(interval)
   }, [])
 
@@ -41,66 +56,83 @@ export default function Home({ currentUser }) {
         .filter(Boolean)
     : []
 
+  // 현재 유저 레벨 정보
+  const matchCount = currentUser?.matchCount || 0
+  const levelInfo = getLevelInfo(matchCount)
+
   return (
-    <div className="space-y-8">
-      {/* Hero Section */}
-      <div className="text-center py-8">
-        <div className="text-6xl mb-4 animate-float">🍱</div>
-        <h1 className="text-3xl font-bold mb-2">
-          <span className="gradient-text">혼밥 탈출!</span>
+    <div className="space-y-6">
+      {/* Hero Section with Level */}
+      <div className="text-center py-6">
+        <div className="text-6xl mb-4 animate-float">{levelInfo.emoji}</div>
+        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-3 ${levelInfo.color}`}>
+          <span className="font-bold">Lv.{levelInfo.level}</span>
+          <span>{levelInfo.name}</span>
+        </div>
+        <h1 className="text-2xl font-bold mb-2 text-gray-800">
+          안녕하세요, <span className="text-blue-600">{currentUser.name}</span>님!
         </h1>
-        <p className="text-gray-600 mb-2">같이 점심 먹을 사람을 찾아보세요</p>
-        <p className="text-sm text-gray-500">
-          👋 안녕하세요, <span className="font-semibold text-primary-600">{currentUser.name}</span>님!
+        <p className="text-gray-500 text-sm">
+          총 {matchCount}회 매칭 완료
+          {levelInfo.nextAt && (
+            <span className="text-blue-500"> · 다음 레벨까지 {levelInfo.nextAt - matchCount}회 남음</span>
+          )}
         </p>
       </div>
 
       {/* CTA Button */}
       <Link
         to="/join"
-        className="block w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-bold py-4 px-6 rounded-2xl text-center text-lg shadow-lg shadow-primary-200 transition-all btn-press card-hover"
+        className="block w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-2xl text-center text-lg shadow-lg shadow-blue-200 transition-all btn-press card-hover"
       >
         🙋‍♂️ 오늘 점심 참여하기
       </Link>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white/80 rounded-2xl p-4 shadow-sm card-hover">
-          <div className="text-3xl mb-1">👥</div>
-          <div className="text-2xl font-bold text-primary-600">
-            {loading ? (
-              <div className="h-8 w-16 shimmer rounded"></div>
-            ) : (
-              stats?.totalParticipants || 0
-            )}
+      {/* Level Progress Card */}
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+          <span>🎖️</span> 나의 쩝쩝박사 레벨
+        </h2>
+        <div className="flex items-center gap-4">
+          <div className={`text-4xl w-16 h-16 flex items-center justify-center rounded-2xl ${levelInfo.color}`}>
+            {levelInfo.emoji}
           </div>
-          <div className="text-sm text-gray-500">오늘 참여자</div>
-        </div>
-        <div className="bg-white/80 rounded-2xl p-4 shadow-sm card-hover">
-          <div className="text-3xl mb-1">🎉</div>
-          <div className="text-2xl font-bold text-accent-600">
-            {loading ? (
-              <div className="h-8 w-16 shimmer rounded"></div>
-            ) : (
-              stats?.totalGroups || 0
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-bold text-lg text-gray-800">Lv.{levelInfo.level} {levelInfo.name}</span>
+            </div>
+            {levelInfo.nextAt && (
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div 
+                  className="bg-blue-500 h-2 rounded-full transition-all"
+                  style={{ 
+                    width: `${Math.min(100, (matchCount / levelInfo.nextAt) * 100)}%` 
+                  }}
+                />
+              </div>
             )}
+            <p className="text-xs text-gray-500 mt-1">
+              {levelInfo.nextAt 
+                ? `다음 레벨(${levelInfo.nextAt}회)까지 ${levelInfo.nextAt - matchCount}회 남았어요!`
+                : '최고 레벨 달성! 🎉'
+              }
+            </p>
           </div>
-          <div className="text-sm text-gray-500">완료된 매칭</div>
         </div>
       </div>
 
       {/* Popular Menus */}
       {popularMenus.length > 0 && (
-        <div className="bg-white/80 rounded-2xl p-5 shadow-sm">
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
           <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <span>🔥</span> 인기 메뉴
+            <span>🔥</span> 오늘 인기 메뉴
           </h2>
           <div className="flex gap-3">
             {popularMenus.map((menu, idx) => (
               <div 
                 key={menu.id}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full ${
-                  idx === 0 ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-700'
+                  idx === 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
                 }`}
               >
                 <span>{menu.emoji}</span>
@@ -115,7 +147,7 @@ export default function Home({ currentUser }) {
       <div className="space-y-3">
         <Link
           to="/rooms"
-          className="flex items-center justify-between bg-white/80 rounded-2xl p-4 shadow-sm card-hover"
+          className="flex items-center justify-between bg-white rounded-2xl p-4 shadow-sm border border-gray-100 card-hover"
         >
           <div className="flex items-center gap-3">
             <span className="text-2xl">🏠</span>
@@ -131,7 +163,7 @@ export default function Home({ currentUser }) {
 
         <Link
           to="/rooms/create"
-          className="flex items-center justify-between bg-white/80 rounded-2xl p-4 shadow-sm card-hover"
+          className="flex items-center justify-between bg-white rounded-2xl p-4 shadow-sm border border-gray-100 card-hover"
         >
           <div className="flex items-center gap-3">
             <span className="text-2xl">➕</span>
@@ -144,25 +176,80 @@ export default function Home({ currentUser }) {
         </Link>
       </div>
 
+      {/* 사내공지 Section */}
+      <div className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-2xl p-5 border border-blue-100">
+        <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+          <span>📢</span> 사내공지
+        </h3>
+        <div className="space-y-3">
+          <div className="bg-white rounded-xl p-4 border border-blue-100">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">공지</span>
+              <span className="text-xs text-gray-400">2024.12.05</span>
+            </div>
+            <p className="text-sm text-gray-700 font-medium">🎄 12월 송년회 점심 매칭 이벤트!</p>
+            <p className="text-xs text-gray-500 mt-1">이번 달 매칭 5회 달성 시 스타벅스 기프티콘 증정</p>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">안내</span>
+              <span className="text-xs text-gray-400">2024.12.01</span>
+            </div>
+            <p className="text-sm text-gray-700 font-medium">LunchMate 서비스 오픈 안내</p>
+            <p className="text-xs text-gray-500 mt-1">혼밥 탈출! 같이 점심 먹을 동료를 찾아보세요</p>
+          </div>
+        </div>
+      </div>
+
       {/* Info Section */}
-      <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-2xl p-5 border border-primary-100">
-        <h3 className="font-bold text-gray-800 mb-3">💡 이용 방법</h3>
+      <div className="bg-white rounded-2xl p-5 border border-gray-100">
+        <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+          <span>💡</span> 이용 방법
+        </h3>
         <ol className="space-y-2 text-sm text-gray-600">
           <li className="flex gap-2">
-            <span className="bg-primary-200 text-primary-700 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">1</span>
+            <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">1</span>
             <span>원하는 시간, 가격대, 메뉴를 선택하세요</span>
           </li>
           <li className="flex gap-2">
-            <span className="bg-primary-200 text-primary-700 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">2</span>
+            <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">2</span>
             <span>비슷한 조건의 동료와 자동으로 매칭돼요</span>
           </li>
           <li className="flex gap-2">
-            <span className="bg-primary-200 text-primary-700 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">3</span>
+            <span className="bg-blue-100 text-blue-700 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0">3</span>
             <span>함께 점심을 즐기고 새로운 인연을 만들어보세요!</span>
           </li>
         </ol>
       </div>
+
+      {/* 쩝쩝박사 레벨 안내 */}
+      <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
+        <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+          <span>📊</span> 쩝쩝박사 레벨 기준
+        </h3>
+        <div className="grid grid-cols-1 gap-2 text-sm">
+          <div className="flex items-center justify-between p-2 bg-white rounded-lg">
+            <span className="flex items-center gap-2"><span>🌱</span> Lv.1 새싹</span>
+            <span className="text-gray-500">매칭 1회</span>
+          </div>
+          <div className="flex items-center justify-between p-2 bg-white rounded-lg">
+            <span className="flex items-center gap-2"><span>🍼</span> Lv.2 먹린이</span>
+            <span className="text-gray-500">매칭 2~5회</span>
+          </div>
+          <div className="flex items-center justify-between p-2 bg-white rounded-lg">
+            <span className="flex items-center gap-2"><span>🍽️</span> Lv.3 미식가</span>
+            <span className="text-gray-500">매칭 6~15회</span>
+          </div>
+          <div className="flex items-center justify-between p-2 bg-white rounded-lg">
+            <span className="flex items-center gap-2"><span>🏆</span> Lv.4 먹고수</span>
+            <span className="text-gray-500">매칭 16~30회</span>
+          </div>
+          <div className="flex items-center justify-between p-2 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+            <span className="flex items-center gap-2"><span>👑</span> Lv.5 쩝쩝박사 마스터</span>
+            <span className="text-blue-600 font-medium">매칭 31회+</span>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
-

@@ -17,7 +17,22 @@ const priceLabels = {
   high: '1.2만 이상',
 }
 
-export default function Rooms({ currentUser }) {
+// 쩝쩝박사 레벨 정보
+const getLevelInfo = (matchCount) => {
+  if (matchCount >= 31) {
+    return { level: 5, name: '쩝쩝박사 마스터', emoji: '👑', color: 'level-5' }
+  } else if (matchCount >= 16) {
+    return { level: 4, name: '먹고수', emoji: '🏆', color: 'level-4' }
+  } else if (matchCount >= 6) {
+    return { level: 3, name: '미식가', emoji: '🍽️', color: 'level-3' }
+  } else if (matchCount >= 2) {
+    return { level: 2, name: '먹린이', emoji: '🍼', color: 'level-2' }
+  } else {
+    return { level: 1, name: '새싹', emoji: '🌱', color: 'level-1' }
+  }
+}
+
+export default function Rooms({ currentUser, refreshUser }) {
   const navigate = useNavigate()
   const [rooms, setRooms] = useState([])
   const [loading, setLoading] = useState(true)
@@ -47,6 +62,7 @@ export default function Rooms({ currentUser }) {
         userId: currentUser.id,
         name: currentUser.name,
         department: currentUser.department,
+        matchCount: currentUser.matchCount || 0,
       })
 
       if (result.error) {
@@ -79,7 +95,7 @@ export default function Rooms({ currentUser }) {
         </h1>
         <Link
           to="/rooms/create"
-          className="flex items-center gap-1 px-4 py-2 bg-primary-500 text-white rounded-xl font-medium text-sm btn-press"
+          className="flex items-center gap-1 px-4 py-2 bg-blue-500 text-white rounded-xl font-medium text-sm btn-press"
         >
           <span>+</span> 방 만들기
         </Link>
@@ -92,7 +108,7 @@ export default function Rooms({ currentUser }) {
           <div className="text-gray-500">아직 열려있는 방이 없어요</div>
           <Link
             to="/rooms/create"
-            className="inline-block px-6 py-3 bg-primary-500 text-white rounded-xl font-medium btn-press"
+            className="inline-block px-6 py-3 bg-blue-500 text-white rounded-xl font-medium btn-press"
           >
             첫 번째 방 만들기
           </Link>
@@ -103,11 +119,13 @@ export default function Rooms({ currentUser }) {
             const menuInfo = menuLabels[room.menu] || { name: room.menu, emoji: '🍽️' }
             const isFull = room.members.length >= room.maxCount
             const isJoined = room.members.some(m => m.id === currentUser.id)
+            const creator = room.members.find(m => m.isCreator)
+            const creatorLevel = getLevelInfo(creator?.matchCount || 0)
 
             return (
               <div
                 key={room.id}
-                className="bg-white/80 rounded-2xl p-5 shadow-sm card-hover"
+                className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 card-hover"
               >
                 {/* Room Header */}
                 <div className="flex items-start justify-between mb-3">
@@ -124,11 +142,31 @@ export default function Rooms({ currentUser }) {
                   <div className={`px-3 py-1 rounded-full text-sm font-medium ${
                     isFull 
                       ? 'bg-gray-100 text-gray-500' 
-                      : 'bg-primary-100 text-primary-600'
+                      : 'bg-blue-100 text-blue-600'
                   }`}>
                     {room.members.length}/{room.maxCount}명
                   </div>
                 </div>
+
+                {/* 방장 레벨 표시 */}
+                {creator && (
+                  <div className="flex items-center gap-2 mb-3 p-2 bg-slate-50 rounded-lg">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      {creator.name?.[0] || '?'}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                        {creator.name}
+                        <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">방장</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${creatorLevel.color}`}>
+                          {creatorLevel.emoji} Lv.{creatorLevel.level} {creatorLevel.name}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Room Info */}
                 <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
@@ -148,7 +186,7 @@ export default function Rooms({ currentUser }) {
                     {room.members.slice(0, 4).map((member, idx) => (
                       <div
                         key={member.id || idx}
-                        className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-xs font-bold border-2 border-white"
+                        className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold border-2 border-white"
                         title={`${member.name} / ${member.department}`}
                       >
                         {member.name?.[0] || '?'}
@@ -164,7 +202,7 @@ export default function Rooms({ currentUser }) {
                 {isJoined ? (
                   <Link
                     to={`/rooms/${room.id}`}
-                    className="block w-full py-3 bg-accent-500 text-white text-center rounded-xl font-medium btn-press"
+                    className="block w-full py-3 bg-blue-600 text-white text-center rounded-xl font-medium btn-press"
                   >
                     내 방 보기 →
                   </Link>
@@ -179,7 +217,7 @@ export default function Rooms({ currentUser }) {
                   <button
                     onClick={() => handleJoin(room.id)}
                     disabled={joining === room.id}
-                    className="w-full py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl font-medium btn-press disabled:opacity-50"
+                    className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium btn-press disabled:opacity-50"
                   >
                     {joining === room.id ? '참여 중...' : '참여하기'}
                   </button>
@@ -197,4 +235,3 @@ export default function Rooms({ currentUser }) {
     </div>
   )
 }
-

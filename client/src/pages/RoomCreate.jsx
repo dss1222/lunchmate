@@ -52,6 +52,7 @@ export default function RoomCreate({ currentUser }) {
         creatorId: currentUser.id,
         creatorName: currentUser.name,
         creatorDepartment: currentUser.department,
+        creatorMatchCount: currentUser.matchCount || 0,
       })
       navigate(`/rooms/${room.id}`)
     } catch (err) {
@@ -71,7 +72,7 @@ export default function RoomCreate({ currentUser }) {
       </div>
 
       {/* Room Title */}
-      <section className="bg-white/80 rounded-2xl p-5 shadow-sm">
+      <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
         <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
           <span>✏️</span> 방 제목
         </h2>
@@ -80,14 +81,14 @@ export default function RoomCreate({ currentUser }) {
           value={formData.title}
           onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
           placeholder="예: 한식 먹을 사람 모여라~"
-          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent"
+          className="w-full px-4 py-3 bg-slate-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
           maxLength={30}
         />
         <p className="text-xs text-gray-400 mt-2 text-right">{formData.title.length}/30</p>
       </section>
 
       {/* Time Selection */}
-      <section className="bg-white/80 rounded-2xl p-5 shadow-sm">
+      <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
         <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
           <span>⏰</span> 시간대
         </h2>
@@ -98,8 +99,8 @@ export default function RoomCreate({ currentUser }) {
               onClick={() => setFormData(prev => ({ ...prev, timeSlot: time }))}
               className={`py-3 rounded-xl font-medium transition-all btn-press ${
                 formData.timeSlot === time
-                  ? 'bg-primary-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'bg-slate-100 text-gray-700 hover:bg-slate-200'
               }`}
             >
               {time}
@@ -109,7 +110,7 @@ export default function RoomCreate({ currentUser }) {
       </section>
 
       {/* Menu Selection */}
-      <section className="bg-white/80 rounded-2xl p-5 shadow-sm">
+      <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
         <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
           <span>🍽️</span> 메뉴
         </h2>
@@ -120,8 +121,8 @@ export default function RoomCreate({ currentUser }) {
               onClick={() => setFormData(prev => ({ ...prev, menu: menu.id }))}
               className={`flex flex-col items-center gap-2 p-4 rounded-xl font-medium transition-all btn-press ${
                 formData.menu === menu.id
-                  ? 'bg-primary-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'bg-slate-100 text-gray-700 hover:bg-slate-200'
               }`}
             >
               <span className="text-2xl">{menu.emoji}</span>
@@ -132,7 +133,7 @@ export default function RoomCreate({ currentUser }) {
       </section>
 
       {/* Price Range */}
-      <section className="bg-white/80 rounded-2xl p-5 shadow-sm">
+      <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
         <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
           <span>💰</span> 가격대
         </h2>
@@ -143,8 +144,8 @@ export default function RoomCreate({ currentUser }) {
               onClick={() => setFormData(prev => ({ ...prev, priceRange: price.id }))}
               className={`w-full flex items-center gap-3 p-4 rounded-xl font-medium transition-all btn-press ${
                 formData.priceRange === price.id
-                  ? 'bg-primary-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'bg-slate-100 text-gray-700 hover:bg-slate-200'
               }`}
             >
               <span className="text-xl">{price.emoji}</span>
@@ -155,7 +156,7 @@ export default function RoomCreate({ currentUser }) {
       </section>
 
       {/* Max Count */}
-      <section className="bg-white/80 rounded-2xl p-5 shadow-sm">
+      <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
         <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
           <span>👥</span> 모집 인원
         </h2>
@@ -166,8 +167,8 @@ export default function RoomCreate({ currentUser }) {
               onClick={() => setFormData(prev => ({ ...prev, maxCount: count }))}
               className={`flex-1 py-3 rounded-xl font-medium transition-all btn-press ${
                 formData.maxCount === count
-                  ? 'bg-primary-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'bg-slate-100 text-gray-700 hover:bg-slate-200'
               }`}
             >
               {count}명
@@ -177,7 +178,7 @@ export default function RoomCreate({ currentUser }) {
       </section>
 
       {/* Preview */}
-      <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-2xl p-5 border border-primary-100">
+      <div className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-2xl p-5 border border-blue-100">
         <h3 className="font-bold text-gray-700 mb-2">📋 미리보기</h3>
         <p className="text-gray-600">
           <strong>{formData.title || '방 제목'}</strong>
@@ -194,7 +195,7 @@ export default function RoomCreate({ currentUser }) {
         className={`w-full py-4 rounded-2xl font-bold text-lg transition-all btn-press ${
           loading || !formData.title.trim() || !formData.menu
             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            : 'bg-gradient-to-r from-accent-500 to-accent-600 text-white shadow-lg shadow-accent-200 hover:from-accent-600 hover:to-accent-700'
+            : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-200 hover:from-blue-600 hover:to-blue-700'
         }`}
       >
         {loading ? '생성 중...' : '🏠 방 만들기'}
@@ -202,4 +203,3 @@ export default function RoomCreate({ currentUser }) {
     </div>
   )
 }
-

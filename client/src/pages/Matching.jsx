@@ -20,7 +20,7 @@ const priceLabels = {
 const TOTAL_TIMEOUT = 300 // 5분 = 300초
 const RELAXATION_INTERVAL = 60 // 1분마다 조건 완화
 
-export default function Matching({ currentUser }) {
+export default function Matching({ currentUser, refreshUser }) {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const location = useLocation()
@@ -32,36 +32,6 @@ export default function Matching({ currentUser }) {
   const [elapsed, setElapsed] = useState(0)
   const [relaxationLevel, setRelaxationLevel] = useState(0)
   const [relaxationMessage, setRelaxationMessage] = useState(null)
-  
-  // elapsed를 ref로 관리하여 useEffect 재실행 방지
-  const elapsedRef = useRef(0)
-  const isMatchedRef = useRef(false)
-
-  // 매칭 상태 확인 함수
-  const checkMatchStatus = useCallback(async () => {
-    if (isMatchedRef.current) return
-    
-    try {
-      const result = await getMatchStatus(matchRequestId, elapsedRef.current)
-      
-      if (result.status === 'matched') {
-        isMatchedRef.current = true
-        navigate(`/result?groupId=${result.groupId}`)
-      } else if (result.status === 'timeout') {
-        isMatchedRef.current = true
-        navigate('/fail', { state: { reason: 'timeout', formData } })
-      } else if (result.status === 'waiting') {
-        setWaitingCount(result.waitingCount || 1)
-        setRelaxationLevel(result.relaxationLevel || 0)
-        setRelaxationMessage(result.relaxationMessage)
-      } else if (result.status === 'not_found') {
-        isMatchedRef.current = true
-        navigate('/fail', { state: { reason: 'not_found', formData } })
-      }
-    } catch (err) {
-      console.error('Poll error:', err)
-    }
-  }, [matchRequestId, navigate, formData])
 
   useEffect(() => {
     if (!matchRequestId) {
@@ -69,11 +39,29 @@ export default function Matching({ currentUser }) {
       return
     }
 
-    // 초기 상태 확인
-    checkMatchStatus()
-
     // 상태 폴링 (2초마다)
-    const pollInterval = setInterval(checkMatchStatus, 2000)
+    const pollInterval = setInterval(async () => {
+      try {
+        const result = await getMatchStatus(matchRequestId, elapsed)
+        
+        if (result.status === 'matched') {
+          clearInterval(pollInterval)
+          navigate(`/result?groupId=${result.groupId}`)
+        } else if (result.status === 'timeout') {
+          clearInterval(pollInterval)
+          navigate('/fail', { state: { reason: 'timeout', formData } })
+        } else if (result.status === 'waiting') {
+          setWaitingCount(result.waitingCount || 1)
+          setRelaxationLevel(result.relaxationLevel || 0)
+          setRelaxationMessage(result.relaxationMessage)
+        } else if (result.status === 'not_found') {
+          clearInterval(pollInterval)
+          navigate('/fail', { state: { reason: 'not_found', formData } })
+        }
+      } catch (err) {
+        console.error('Poll error:', err)
+      }
+    }, 2000)
 
     // 경과 시간 카운터 (1초마다)
     const timerInterval = setInterval(() => {
@@ -147,18 +135,18 @@ export default function Matching({ currentUser }) {
 
       {/* Relaxation Message */}
       {relaxationMessage && (
-        <div className="w-full max-w-sm bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+        <div className="w-full max-w-sm bg-blue-50 border border-blue-200 rounded-xl p-4">
           <div className="flex items-start gap-3">
             <span className="text-xl">⚡</span>
             <div className="text-left">
-              <p className="text-sm text-yellow-800 font-medium">{relaxationMessage}</p>
+              <p className="text-sm text-blue-800 font-medium">{relaxationMessage}</p>
             </div>
           </div>
         </div>
       )}
 
       {/* Conditions Card */}
-      <div className="w-full max-w-sm bg-white/80 rounded-2xl p-5 shadow-sm">
+      <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
         <h3 className="text-sm font-medium text-gray-500 mb-3">선택한 조건</h3>
         <div className="space-y-2 text-left">
           <div className="flex items-center gap-2">
@@ -181,10 +169,10 @@ export default function Matching({ currentUser }) {
             <h4 className="text-sm font-medium text-gray-500 mb-2">선호 조건</h4>
             <div className="flex flex-wrap gap-2">
               {remainingConditions.map(cond => (
-                <span key={cond.key} className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm">
+                <span key={cond.key} className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
                   <span>{cond.icon}</span>
                   <span>{cond.label}</span>
-                  <span className="text-primary-400">✓</span>
+                  <span className="text-blue-400">✓</span>
                 </span>
               ))}
               {relaxedConditions.map(cond => (
@@ -201,7 +189,7 @@ export default function Matching({ currentUser }) {
       {/* Stats */}
       <div className="flex gap-6">
         <div className="text-center">
-          <div className="text-2xl font-bold text-primary-600">{waitingCount}</div>
+          <div className="text-2xl font-bold text-blue-600">{waitingCount}</div>
           <div className="text-xs text-gray-500">대기 중인 사람</div>
         </div>
         <div className="text-center">
@@ -209,7 +197,7 @@ export default function Matching({ currentUser }) {
           <div className="text-xs text-gray-500">경과 시간</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-accent-600">{formatTime(TOTAL_TIMEOUT - elapsed)}</div>
+          <div className="text-2xl font-bold text-blue-600">{formatTime(TOTAL_TIMEOUT - elapsed)}</div>
           <div className="text-xs text-gray-500">남은 시간</div>
         </div>
       </div>
@@ -218,7 +206,7 @@ export default function Matching({ currentUser }) {
       <div className="w-full max-w-sm">
         <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-primary-400 via-primary-500 to-accent-500 transition-all duration-1000"
+            className="h-full bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 transition-all duration-1000"
             style={{ width: `${Math.min((elapsed / TOTAL_TIMEOUT) * 100, 100)}%` }}
           />
         </div>
@@ -226,9 +214,9 @@ export default function Matching({ currentUser }) {
           <span>0:00</span>
           {hasPreferences && (
             <>
-              <span className={elapsed >= 60 ? 'text-yellow-500 font-medium' : ''}>1:00</span>
-              <span className={elapsed >= 120 ? 'text-yellow-500 font-medium' : ''}>2:00</span>
-              <span className={elapsed >= 180 ? 'text-yellow-500 font-medium' : ''}>3:00</span>
+              <span className={elapsed >= 60 ? 'text-blue-500 font-medium' : ''}>1:00</span>
+              <span className={elapsed >= 120 ? 'text-blue-500 font-medium' : ''}>2:00</span>
+              <span className={elapsed >= 180 ? 'text-blue-500 font-medium' : ''}>3:00</span>
             </>
           )}
           <span>5:00</span>
@@ -245,7 +233,7 @@ export default function Matching({ currentUser }) {
       <div className="w-full max-w-sm space-y-3">
         <button
           onClick={() => navigate('/fail', { state: { reason: 'manual', formData } })}
-          className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors btn-press"
+          className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-gray-700 rounded-xl font-medium transition-colors btn-press"
         >
           조건 변경하기
         </button>

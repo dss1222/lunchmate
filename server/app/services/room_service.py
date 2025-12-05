@@ -29,7 +29,7 @@ class RoomService:
     @staticmethod
     def create_room(title: str, time_slot: str, menu: str, price_range: str,
                     max_count: int, creator_id: str, creator_name: str,
-                    creator_department: str) -> dict:
+                    creator_department: str, creator_match_count: int = 0) -> dict:
         """점심방 생성"""
         room = data_store.create_room({
             "title": title,
@@ -41,6 +41,7 @@ class RoomService:
                 "id": creator_id or generate_id(),
                 "name": creator_name,
                 "department": creator_department,
+                "matchCount": creator_match_count,
                 "isCreator": True,
             }],
             "restaurant": get_recommended_restaurant(menu, price_range),
@@ -49,7 +50,7 @@ class RoomService:
         return room
     
     @staticmethod
-    def join_room(room_id: str, user_id: str, name: str, department: str) -> dict:
+    def join_room(room_id: str, user_id: str, name: str, department: str, match_count: int = 0) -> dict:
         """점심방 참여"""
         room = data_store.get_room_by_id(room_id)
         if not room:
@@ -65,11 +66,17 @@ class RoomService:
             "id": user_id or generate_id(),
             "name": name,
             "department": department,
+            "matchCount": match_count,
             "joinedAt": datetime.now().isoformat(),
         })
         
+        # 방이 가득 찼으면 모든 멤버의 매칭 횟수 증가
         if len(room["members"]) >= room["maxCount"]:
             room["status"] = "full"
+            # 모든 멤버의 매칭 횟수 증가
+            for member in room["members"]:
+                if member.get("id"):
+                    data_store.increment_match_count(member["id"])
         
         return room
     

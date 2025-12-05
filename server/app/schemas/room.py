@@ -15,6 +15,7 @@ class RoomCreateRequest(BaseModel):
     creatorId: Optional[str] = None
     creatorName: Optional[str] = "방장"
     creatorDepartment: Optional[str] = "미지정"
+    creatorMatchCount: Optional[int] = 0
 
 
 class RoomJoinRequest(BaseModel):
@@ -22,6 +23,7 @@ class RoomJoinRequest(BaseModel):
     userId: Optional[str] = None
     name: Optional[str] = "참여자"
     department: Optional[str] = "미지정"
+    matchCount: Optional[int] = 0
 
 
 class RoomLeaveRequest(BaseModel):

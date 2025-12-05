@@ -34,6 +34,7 @@ def create_room(request: RoomCreateRequest):
         creator_id=request.creatorId,
         creator_name=request.creatorName,
         creator_department=request.creatorDepartment,
+        creator_match_count=request.creatorMatchCount,
     )
 
 
@@ -45,6 +46,7 @@ def join_room(room_id: str, request: RoomJoinRequest):
         user_id=request.userId,
         name=request.name,
         department=request.department,
+        match_count=request.matchCount,
     )
 
 

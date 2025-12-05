@@ -180,6 +180,11 @@ class MatchService:
             # 대기열에서 제거
             data_store.remove_waiting_users(member_ids)
             
+            # 각 멤버의 매칭 횟수 증가
+            for member in group_members:
+                if member.get("userId"):
+                    data_store.increment_match_count(member["userId"])
+            
             # 그룹 생성
             group = data_store.create_group({
                 "members": group_members,
@@ -238,6 +243,11 @@ class MatchService:
             
             # 대기열에서 제거
             data_store.remove_waiting_users(member_ids)
+            
+            # 각 멤버의 매칭 횟수 증가
+            for member in group_members:
+                if member.get("userId"):
+                    data_store.increment_match_count(member["userId"])
             
             # 그룹 생성
             group = data_store.create_group({

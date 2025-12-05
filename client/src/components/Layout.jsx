@@ -1,6 +1,21 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
+// 쩝쩝박사 레벨 정보
+const getLevelInfo = (matchCount) => {
+  if (matchCount >= 31) {
+    return { level: 5, name: '쩝쩝박사 마스터', emoji: '👑', color: 'level-5' }
+  } else if (matchCount >= 16) {
+    return { level: 4, name: '먹고수', emoji: '🏆', color: 'level-4' }
+  } else if (matchCount >= 6) {
+    return { level: 3, name: '미식가', emoji: '🍽️', color: 'level-3' }
+  } else if (matchCount >= 2) {
+    return { level: 2, name: '먹린이', emoji: '🍼', color: 'level-2' }
+  } else {
+    return { level: 1, name: '새싹', emoji: '🌱', color: 'level-1' }
+  }
+}
+
 export default function Layout({ children, currentUser, onLogout }) {
   const location = useLocation()
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -17,26 +32,28 @@ export default function Layout({ children, currentUser, onLogout }) {
     }
   }
 
+  const userLevel = getLevelInfo(currentUser?.matchCount || 0)
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="glass sticky top-0 z-50 border-b border-orange-100">
+      <header className="glass sticky top-0 z-50 border-b border-blue-100">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <span className="text-2xl">🍱</span>
-            <span className="font-bold text-xl gradient-text">LunchMate</span>
+            <span className="font-game text-2xl gradient-text">LunchMate</span>
           </Link>
           
           {/* 사용자 정보 & 로그아웃 */}
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 px-3 py-2 bg-white/80 border border-orange-200 rounded-xl hover:bg-orange-50 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 bg-white border border-blue-200 rounded-xl hover:bg-blue-50 transition-colors"
             >
-              <div className="w-7 h-7 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+              <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white text-sm font-bold">
                 {currentUser?.name?.[0] || '?'}
               </div>
-              <span className="text-sm font-medium text-gray-700 max-w-[100px] truncate">
+              <span className="text-sm font-medium text-gray-700 max-w-[80px] truncate">
                 {currentUser?.name || '사용자'}
               </span>
               <span className="text-gray-400 text-xs">▼</span>
@@ -49,12 +66,25 @@ export default function Layout({ children, currentUser, onLogout }) {
                   className="fixed inset-0 z-40" 
                   onClick={() => setShowUserMenu(false)}
                 />
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden">
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden">
                   {/* 사용자 정보 */}
-                  <div className="px-4 py-3 bg-gradient-to-r from-primary-50 to-accent-50 border-b border-gray-100">
+                  <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-slate-50 border-b border-gray-100">
                     <div className="font-medium text-gray-800">{currentUser?.name}</div>
                     <div className="text-sm text-gray-500">{currentUser?.department}</div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`text-xs px-2 py-1 rounded-full ${userLevel.color}`}>
+                        {userLevel.emoji} Lv.{userLevel.level} {userLevel.name}
+                      </span>
+                    </div>
                     <div className="text-xs text-gray-400 mt-1">
+                      매칭 {currentUser?.matchCount || 0}회 완료
+                    </div>
+                  </div>
+                  
+                  {/* 직급 정보 */}
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <div className="text-xs text-gray-400">직급</div>
+                    <div className="text-sm text-gray-600">
                       {currentUser?.level === 'intern' && '인턴'}
                       {currentUser?.level === 'staff' && '사원'}
                       {currentUser?.level === 'assistant' && '대리'}
@@ -88,7 +118,7 @@ export default function Layout({ children, currentUser, onLogout }) {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="glass sticky bottom-0 border-t border-orange-100">
+      <nav className="glass sticky bottom-0 border-t border-blue-100">
         <div className="max-w-lg mx-auto px-4 py-2">
           <div className="flex justify-around items-center">
             {navItems.map(item => {
@@ -100,8 +130,8 @@ export default function Layout({ children, currentUser, onLogout }) {
                   to={item.path}
                   className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${
                     isActive 
-                      ? 'bg-primary-100 text-primary-600' 
-                      : 'text-gray-500 hover:text-primary-500 hover:bg-primary-50'
+                      ? 'bg-blue-100 text-blue-600' 
+                      : 'text-gray-500 hover:text-blue-500 hover:bg-blue-50'
                   }`}
                 >
                   <span className="text-xl">{item.icon}</span>

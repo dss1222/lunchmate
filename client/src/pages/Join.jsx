@@ -91,7 +91,7 @@ export default function Join({ currentUser }) {
       </div>
 
       {/* Time Selection */}
-      <section className="bg-white/80 rounded-2xl p-5 shadow-sm">
+      <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
         <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
           <span>⏰</span> 시간대 선택
         </h2>
@@ -102,8 +102,8 @@ export default function Join({ currentUser }) {
               onClick={() => setFormData(prev => ({ ...prev, timeSlot: time }))}
               className={`py-3 rounded-xl font-medium transition-all btn-press ${
                 formData.timeSlot === time
-                  ? 'bg-primary-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'bg-slate-100 text-gray-700 hover:bg-slate-200'
               }`}
             >
               {time}
@@ -113,7 +113,7 @@ export default function Join({ currentUser }) {
       </section>
 
       {/* Price Selection */}
-      <section className="bg-white/80 rounded-2xl p-5 shadow-sm">
+      <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
         <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
           <span>💰</span> 가격대 선택
         </h2>
@@ -124,8 +124,8 @@ export default function Join({ currentUser }) {
               onClick={() => setFormData(prev => ({ ...prev, priceRange: price.id }))}
               className={`w-full flex items-center gap-3 p-4 rounded-xl font-medium transition-all btn-press ${
                 formData.priceRange === price.id
-                  ? 'bg-primary-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'bg-slate-100 text-gray-700 hover:bg-slate-200'
               }`}
             >
               <span className="text-xl">{price.emoji}</span>
@@ -136,7 +136,7 @@ export default function Join({ currentUser }) {
       </section>
 
       {/* Menu Selection */}
-      <section className="bg-white/80 rounded-2xl p-5 shadow-sm">
+      <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
         <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
           <span>🍽️</span> 메뉴/카테고리 선택
         </h2>
@@ -147,8 +147,8 @@ export default function Join({ currentUser }) {
               onClick={() => handleMenuSelect(menu.id)}
               className={`flex flex-col items-center gap-2 p-4 rounded-xl font-medium transition-all btn-press ${
                 formData.menu === menu.id
-                  ? 'bg-primary-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-blue-500 text-white shadow-md'
+                  : 'bg-slate-100 text-gray-700 hover:bg-slate-200'
               }`}
             >
               <span className="text-2xl">{menu.emoji}</span>
@@ -159,7 +159,7 @@ export default function Join({ currentUser }) {
       </section>
 
       {/* Preferences (Expandable) */}
-      <section className="bg-white/80 rounded-2xl shadow-sm overflow-hidden">
+      <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <button
           onClick={() => setShowPreferences(!showPreferences)}
           className="w-full flex items-center justify-between p-5"
@@ -187,13 +187,13 @@ export default function Join({ currentUser }) {
             ].map(pref => (
               <label
                 key={pref.key}
-                className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors"
               >
                 <input
                   type="checkbox"
                   checked={formData.preferences[pref.key]}
                   onChange={() => handlePreferenceToggle(pref.key)}
-                  className="w-5 h-5 rounded text-primary-500 focus:ring-primary-400"
+                  className="w-5 h-5 rounded text-blue-500 focus:ring-blue-400"
                 />
                 <span className="text-lg">{pref.icon}</span>
                 <span className="text-gray-700">{pref.label}</span>
@@ -210,7 +210,7 @@ export default function Join({ currentUser }) {
         className={`w-full py-4 rounded-2xl font-bold text-lg transition-all btn-press ${
           loading || !formData.menu
             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            : 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-200 hover:from-primary-600 hover:to-primary-700'
+            : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-200 hover:from-blue-600 hover:to-blue-700'
         }`}
       >
         {loading ? (
@@ -233,4 +233,3 @@ export default function Join({ currentUser }) {
     </div>
   )
 }
-

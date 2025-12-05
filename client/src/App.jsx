@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
-import { getStoredUser, logout as apiLogout, isLoggedIn } from './api'
+import { useState, useEffect, useCallback } from 'react'
+import { getStoredUser, logout as apiLogout, isLoggedIn, getMe } from './api'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import Join from './pages/Join'
@@ -34,15 +34,40 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // 앱 시작 시 저장된 사용자 정보 복원
-  useEffect(() => {
+  // 사용자 정보 새로고침 함수
+  const refreshUser = useCallback(async () => {
     if (isLoggedIn()) {
-      const storedUser = getStoredUser()
-      if (storedUser) {
-        setCurrentUser(storedUser)
+      try {
+        const user = await getMe()
+        setCurrentUser(user)
+        // localStorage도 업데이트
+        localStorage.setItem('user', JSON.stringify(user))
+      } catch (err) {
+        console.error('사용자 정보 새로고침 실패:', err)
       }
     }
-    setLoading(false)
+  }, [])
+
+  // 앱 시작 시 저장된 사용자 정보 복원
+  useEffect(() => {
+    const initUser = async () => {
+      if (isLoggedIn()) {
+        try {
+          // 서버에서 최신 정보 가져오기
+          const user = await getMe()
+          setCurrentUser(user)
+          localStorage.setItem('user', JSON.stringify(user))
+        } catch (err) {
+          // 실패하면 저장된 정보 사용
+          const storedUser = getStoredUser()
+          if (storedUser) {
+            setCurrentUser(storedUser)
+          }
+        }
+      }
+      setLoading(false)
+    }
+    initUser()
   }, [])
 
   // 로그인 핸들러
@@ -59,7 +84,7 @@ function App() {
   // 로딩 중
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="text-5xl animate-bounce">🍱</div>
       </div>
     )
@@ -84,14 +109,14 @@ function App() {
         <PrivateRoute user={currentUser}>
           <Layout currentUser={currentUser} onLogout={handleLogout}>
             <Routes>
-              <Route path="/" element={<Home currentUser={currentUser} />} />
+              <Route path="/" element={<Home currentUser={currentUser} refreshUser={refreshUser} />} />
               <Route path="/join" element={<Join currentUser={currentUser} />} />
-              <Route path="/matching" element={<Matching currentUser={currentUser} />} />
-              <Route path="/result" element={<Result currentUser={currentUser} />} />
+              <Route path="/matching" element={<Matching currentUser={currentUser} refreshUser={refreshUser} />} />
+              <Route path="/result" element={<Result currentUser={currentUser} refreshUser={refreshUser} />} />
               <Route path="/fail" element={<Fail currentUser={currentUser} />} />
-              <Route path="/rooms" element={<Rooms currentUser={currentUser} />} />
+              <Route path="/rooms" element={<Rooms currentUser={currentUser} refreshUser={refreshUser} />} />
               <Route path="/rooms/create" element={<RoomCreate currentUser={currentUser} />} />
-              <Route path="/rooms/:roomId" element={<RoomDetail currentUser={currentUser} />} />
+              <Route path="/rooms/:roomId" element={<RoomDetail currentUser={currentUser} refreshUser={refreshUser} />} />
               <Route path="/dashboard" element={<Dashboard />} />
             </Routes>
           </Layout>

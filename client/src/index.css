@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -14,8 +16,14 @@ html {
 
 body {
   font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
-  background: linear-gradient(135deg, #fef7ee 0%, #fff7ed 50%, #fef3c7 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
   min-height: 100vh;
+}
+
+/* 게임 스타일 로고 폰트 */
+.game-font {
+  font-family: 'Jua', 'Pretendard', sans-serif;
+  letter-spacing: 1px;
 }
 
 /* Custom scrollbar */
@@ -24,17 +32,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #f1f5f9;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #f19341;
+  background: #3b82f6;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #ed751c;
+  background: #2563eb;
 }
 
 /* Loading animation */
@@ -49,9 +57,9 @@ body {
   animation: loading-dots 1.5s infinite;
 }
 
-/* Gradient text */
+/* Gradient text - 파란색 기반 */
 .gradient-text {
-  background: linear-gradient(135deg, #ed751c 0%, #f19341 50%, #22c55e 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -64,7 +72,7 @@ body {
 
 .card-hover:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.15), 0 10px 10px -5px rgba(59, 130, 246, 0.08);
 }
 
 /* Button press effect */
@@ -78,7 +86,7 @@ body {
 
 /* Glass effect */
 .glass {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -90,8 +98,24 @@ body {
 }
 
 .shimmer {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
+/* Level badge styles - 파란색 기반 */
+.level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.level-1 { background: #dbeafe; color: #1e40af; }
+.level-2 { background: #bfdbfe; color: #1d4ed8; }
+.level-3 { background: #93c5fd; color: #1e3a8a; }
+.level-4 { background: #60a5fa; color: #fff; }
+.level-5 { background: linear-gradient(135deg, #1e40af, #3b82f6); color: #fff; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }

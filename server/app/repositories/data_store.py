@@ -20,6 +20,41 @@ class DataStore:
         self._groups: List[dict] = []
         self._rooms: List[dict] = []
     
+    # ============ 레벨 시스템 ============
+    @staticmethod
+    def calculate_food_level(match_count: int) -> dict:
+        """매칭 횟수에 따른 쩝쩝박사 레벨 계산"""
+        if match_count >= 31:
+            return {"level": 5, "name": "쩝쩝박사 마스터", "emoji": "👑", "minCount": 31}
+        elif match_count >= 16:
+            return {"level": 4, "name": "먹고수", "emoji": "🏆", "minCount": 16}
+        elif match_count >= 6:
+            return {"level": 3, "name": "미식가", "emoji": "🍽️", "minCount": 6}
+        elif match_count >= 2:
+            return {"level": 2, "name": "먹린이", "emoji": "🍼", "minCount": 2}
+        else:
+            return {"level": 1, "name": "새싹", "emoji": "🌱", "minCount": 0}
+    
+    def increment_match_count(self, user_id: str) -> Optional[dict]:
+        """유저 매칭 횟수 증가"""
+        user = self.get_user_by_id(user_id)
+        if user:
+            user["matchCount"] = user.get("matchCount", 0) + 1
+        return user
+    
+    def get_user_with_level(self, user_id: str) -> Optional[dict]:
+        """레벨 정보 포함한 유저 조회"""
+        user = self.get_user_by_id(user_id)
+        if user:
+            match_count = user.get("matchCount", 0)
+            food_level = self.calculate_food_level(match_count)
+            return {
+                **{k: v for k, v in user.items() if k != "password"},
+                "foodLevel": food_level,
+                "matchCount": match_count,
+            }
+        return None
+    
     # ============ 유저 관련 ============
     def get_all_users(self) -> List[dict]:
         """모든 유저 조회 (비밀번호 제외)"""
