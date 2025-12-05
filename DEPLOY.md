@@ -42,9 +42,9 @@ git push -u origin main
 3. 설정:
    - **Name**: `lunchmate-api`
    - **Root Directory**: `server`
-   - **Environment**: `Node`
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
+   - **Environment**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
    - **Instance Type**: `Free` 선택
 
 4. **Create Web Service** 클릭

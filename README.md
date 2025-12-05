@@ -27,11 +27,15 @@ LunchMate는 혼밥하는 직장인들을 위한 점심 매칭 서비스입니�
 
 ```bash
 cd server
-npm install
-npm run dev
+pip install -r requirements.txt
+uvicorn main:app --reload --port 3001
 ```
 
 서버가 http://localhost:3001 에서 실행됩니다.
+
+📚 **API 문서 자동 생성!**
+- Swagger UI: http://localhost:3001/docs
+- ReDoc: http://localhost:3001/redoc
 
 #### 2. 프론트엔드 실행 (새 터미널)
 
@@ -66,8 +70,10 @@ npm run dev
 - Vite
 
 ### Backend
-- Node.js
-- Express
+- Python 3.11+
+- FastAPI
+- Pydantic (데이터 검증)
+- Uvicorn (ASGI 서버)
 - In-Memory 데이터 저장 (데모용)
 
 ## 📡 API 엔드포인트

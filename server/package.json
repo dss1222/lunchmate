@@ -1,17 +1,11 @@
 {
   "name": "lunchmate-server",
   "version": "1.0.0",
-  "description": "LunchMate 백엔드 서버",
-  "main": "index.js",
-  "type": "module",
+  "description": "LunchMate 백엔드 서버 (FastAPI)",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "uvicorn main:app --reload --port 3001",
+    "start": "uvicorn main:app --host 0.0.0.0 --port 3001"
   },
-  "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "uuid": "^9.0.0"
-  }
+  "note": "이 프로젝트는 Python FastAPI를 사용합니다. pip install -r requirements.txt 후 npm run dev로 실행하세요."
 }
 
