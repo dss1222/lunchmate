@@ -277,12 +277,11 @@ class MatchService:
                 "relaxationMessage": "매칭 시간이 초과되었습니다.",
             }
         
-        # 대기 중 (자기 자신은 제외한 카운트)
+        # 대기 중인 전체 인원 (나 포함)
         all_waiting = data_store.get_waiting_users_by_conditions(
             in_waiting["timeSlot"], in_waiting["priceRange"], in_waiting["menu"]
         )
-        # 자기 자신 제외
-        waiting_count = len([u for u in all_waiting if u["id"] != match_request_id])
+        waiting_count = len(all_waiting)  # 나 포함 전체 인원
         
         return {
             "status": "waiting",
