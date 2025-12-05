@@ -1,7 +1,7 @@
 // 개발: vite proxy 사용 (/api -> localhost:3001)
 // 배포: vercel rewrites 사용 (/api -> render backend)
 // VITE_API_URL이 설정되어 있으면 직접 호출
-const API_BASE = 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 // ============ 인증 헬퍼 ============
 function getAuthHeader() {
