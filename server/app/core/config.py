@@ -1,6 +1,18 @@
 """
 애플리케이션 설정
 """
+import os
+from dotenv import load_dotenv
+
+# .env 파일 로드
+load_dotenv()
+
+# ============ 카카오 API 설정 ============
+KAKAO_REST_API_KEY = os.getenv("KAKAO_REST_API_KEY", "3b7c96af16eb7ae60cba8b77520d9044")
+
+# 여의도 기본 좌표
+YEOUIDO_LATITUDE = 37.530230
+YEOUIDO_LONGITUDE = 126.926439
 
 # 직급 그룹 정의
 LEVEL_GROUPS = [

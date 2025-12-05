@@ -2,7 +2,18 @@
 점심방 관련 스키마
 """
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
+
+
+class RestaurantInfo(BaseModel):
+    """선택한 식당 정보"""
+    id: Optional[str] = None
+    name: str
+    category: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    placeUrl: Optional[str] = None
+    distance: Optional[int] = None
 
 
 class RoomCreateRequest(BaseModel):
@@ -16,6 +27,7 @@ class RoomCreateRequest(BaseModel):
     creatorName: Optional[str] = "방장"
     creatorDepartment: Optional[str] = "미지정"
     creatorMatchCount: Optional[int] = 0
+    restaurantInfo: Optional[RestaurantInfo] = None
 
 
 class RoomJoinRequest(BaseModel):

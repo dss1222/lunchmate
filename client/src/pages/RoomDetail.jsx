@@ -237,29 +237,47 @@ export default function RoomDetail({ currentUser, refreshUser }) {
       </div>
 
       {/* Restaurant */}
-      {room.restaurant && (
-        <div className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-2xl p-5 border border-blue-100">
-          <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
-            <span>🍽️</span> 식당
-          </h2>
+      <div className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-2xl p-5 border border-blue-100">
+        <h2 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+          <span>🍽️</span> 식당
+        </h2>
+        {room.restaurant ? (
           <div className="bg-white rounded-xl p-4 shadow-sm">
             <div className="flex items-start justify-between">
-              <div>
+              <div className="flex-1">
                 <h3 className="font-bold text-lg text-gray-800">{room.restaurant.name}</h3>
-                <p className="text-sm text-gray-500">
-                  도보 {room.restaurant.distance}분 · {priceLabels[room.restaurant.price]}
-                </p>
+                {room.restaurant.category && (
+                  <p className="text-sm text-gray-500 mt-1">{room.restaurant.category}</p>
+                )}
+                {room.restaurant.address && (
+                  <p className="text-xs text-gray-400 mt-1">{room.restaurant.address}</p>
+                )}
               </div>
-              {room.restaurant.rating && (
-                <div className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded-lg">
-                  <span className="text-blue-500">⭐</span>
-                  <span className="font-medium text-blue-700">{room.restaurant.rating}</span>
+              {room.restaurant.distance && (
+                <div className="text-sm font-medium text-blue-600">
+                  {room.restaurant.distance}m
                 </div>
               )}
             </div>
+            {room.restaurant.placeUrl && (
+              <a
+                href={room.restaurant.placeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 block w-full py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-medium text-center rounded-lg text-sm transition-all"
+              >
+                🗺️ 카카오맵에서 보기
+              </a>
+            )}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="bg-white rounded-xl p-4 shadow-sm text-center">
+            <div className="text-3xl mb-2">{menuInfo.emoji}</div>
+            <p className="font-medium text-gray-700">{menuInfo.name} 맛집</p>
+            <p className="text-sm text-gray-500 mt-1">만나서 정해요!</p>
+          </div>
+        )}
+      </div>
 
       {/* Meeting Point */}
       <div className="bg-blue-50 rounded-2xl p-5 border border-blue-100">

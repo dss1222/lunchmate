@@ -1,7 +1,7 @@
 // 개발: vite proxy 사용 (/api -> localhost:3001)
 // 배포: vercel rewrites 사용 (/api -> render backend)
 // VITE_API_URL이 설정되어 있으면 직접 호출
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = 'http://localhost:3001';
 
 // ============ 인증 헬퍼 ============
 function getAuthHeader() {
@@ -189,5 +189,41 @@ export async function getRandomRestaurant(menu, priceRange) {
   if (params.toString()) url += `?${params.toString()}`;
   const res = await fetch(url);
   return res.json();
+}
+
+// ============ 카카오 맛집 검색 API ============
+
+// 여의도 기본 좌표
+const YEOUIDO_LOCATION = {
+  latitude: 37.530230,
+  longitude: 126.926439,
+};
+
+// 주변 맛집 검색 (키워드 기반)
+export async function getNearbyRestaurants({ latitude, longitude, keyword = '맛집', radius = 1000, page = 1, size = 15 }) {
+  const params = new URLSearchParams({
+    latitude: latitude.toString(),
+    longitude: longitude.toString(),
+    keyword,
+    radius: radius.toString(),
+    page: page.toString(),
+    size: size.toString(),
+  });
+  
+  const res = await fetch(`${API_BASE}/restaurants/nearby?${params.toString()}`);
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.detail || '맛집 검색에 실패했습니다.');
+  }
+  return res.json();
+}
+
+// 여의도 기준 맛집 검색
+export async function searchYeouidoRestaurants(keyword = '맛집', radius = 1000) {
+  return getNearbyRestaurants({
+    ...YEOUIDO_LOCATION,
+    keyword,
+    radius,
+  });
 }
 

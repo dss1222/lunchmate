@@ -35,6 +35,7 @@ def create_room(request: RoomCreateRequest):
         creator_name=request.creatorName,
         creator_department=request.creatorDepartment,
         creator_match_count=request.creatorMatchCount,
+        restaurant_info=request.restaurantInfo.model_dump() if request.restaurantInfo else None,
     )
 
 

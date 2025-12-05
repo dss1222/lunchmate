@@ -29,8 +29,12 @@ class RoomService:
     @staticmethod
     def create_room(title: str, time_slot: str, menu: str, price_range: str,
                     max_count: int, creator_id: str, creator_name: str,
-                    creator_department: str, creator_match_count: int = 0) -> dict:
+                    creator_department: str, creator_match_count: int = 0,
+                    restaurant_info: dict = None) -> dict:
         """점심방 생성"""
+        # 사용자가 선택한 식당이 있으면 그것을 사용, 없으면 None
+        restaurant = restaurant_info if restaurant_info else None
+        
         room = data_store.create_room({
             "title": title,
             "timeSlot": time_slot,
@@ -44,7 +48,7 @@ class RoomService:
                 "matchCount": creator_match_count,
                 "isCreator": True,
             }],
-            "restaurant": get_recommended_restaurant(menu, price_range),
+            "restaurant": restaurant,
             "status": "open",
         })
         return room

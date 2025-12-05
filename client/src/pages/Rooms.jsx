@@ -173,11 +173,9 @@ export default function Rooms({ currentUser, refreshUser }) {
                   <span className="flex items-center gap-1">
                     ⏰ {room.timeSlot}
                   </span>
-                  {room.restaurant && (
-                    <span className="flex items-center gap-1">
-                      📍 {room.restaurant.name}
-                    </span>
-                  )}
+                  <span className="flex items-center gap-1">
+                    📍 {room.restaurant?.name || `${menuInfo.name} 맛집`}
+                  </span>
                 </div>
 
                 {/* Members Preview */}
