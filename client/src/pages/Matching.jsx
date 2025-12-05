@@ -51,7 +51,7 @@ export default function Matching({ currentUser, refreshUser }) {
         isMatchedRef.current = true
         navigate('/fail', { state: { reason: 'timeout', formData } })
       } else if (result.status === 'waiting') {
-        setWaitingCount(result.waitingCount || 1)
+        setWaitingCount(result.waitingCount ?? 1)  // 나 포함 전체 대기 인원
         setRelaxationLevel(result.relaxationLevel || 0)
         setRelaxationMessage(result.relaxationMessage)
       } else if (result.status === 'not_found') {
@@ -201,8 +201,8 @@ export default function Matching({ currentUser, refreshUser }) {
       {/* Stats */}
       <div className="flex gap-6">
         <div className="text-center">
-          <div className="text-2xl font-bold text-blue-600">{waitingCount}</div>
-          <div className="text-xs text-gray-500">대기 중인 사람</div>
+          <div className="text-2xl font-bold text-blue-600">{waitingCount}명</div>
+          <div className="text-xs text-gray-500">같은 조건 대기</div>
         </div>
         <div className="text-center">
           <div className="text-2xl font-bold text-gray-600">{formatTime(elapsed)}</div>

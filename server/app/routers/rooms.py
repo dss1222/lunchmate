@@ -12,8 +12,14 @@ router = APIRouter(prefix="/rooms", tags=["점심방"])
 
 @router.get("")
 def get_rooms():
-    """열린 점심방 목록"""
+    """열린 점심방 + 매칭 완료된 방 목록"""
     return RoomService.get_all_rooms()
+
+
+@router.get("/my/{user_id}")
+def get_my_rooms(user_id: str):
+    """내가 참여 중인 방 목록"""
+    return RoomService.get_user_rooms(user_id)
 
 
 @router.get("/{room_id}")

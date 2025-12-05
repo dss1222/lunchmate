@@ -15,8 +15,13 @@ class RoomService:
     
     @staticmethod
     def get_all_rooms() -> List[dict]:
-        """열린 점심방 목록 조회"""
-        return data_store.get_open_rooms()
+        """열린 점심방 + 매칭 완료된 방 목록 조회"""
+        return data_store.get_all_active_rooms()
+    
+    @staticmethod
+    def get_user_rooms(user_id: str) -> List[dict]:
+        """특정 유저가 참여 중인 방 조회"""
+        return data_store.get_user_rooms(user_id)
     
     @staticmethod
     def get_room(room_id: str) -> dict:

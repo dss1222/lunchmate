@@ -182,6 +182,22 @@ class DataStore:
             if len(r["members"]) < r["maxCount"] and r["status"] == "open"
         ]
     
+    def get_all_active_rooms(self) -> List[dict]:
+        """열린 방 + 매칭 완료된 방 모두 조회 (오늘 날짜 기준)"""
+        from datetime import date
+        today = date.today().isoformat()
+        return [
+            r for r in self._rooms
+            if r.get("createdAt", "").startswith(today)
+        ]
+    
+    def get_user_rooms(self, user_id: str) -> List[dict]:
+        """특정 유저가 참여 중인 방 조회"""
+        return [
+            r for r in self._rooms
+            if any(m.get("id") == user_id for m in r.get("members", []))
+        ]
+    
     def get_room_by_id(self, room_id: str) -> Optional[dict]:
         """ID로 점심방 조회"""
         return next((r for r in self._rooms if r["id"] == room_id), None)

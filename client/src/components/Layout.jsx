@@ -81,17 +81,35 @@ export default function Layout({ children, currentUser, onLogout }) {
                     </div>
                   </div>
                   
-                  {/* 직급 정보 */}
+                  {/* 직급/나이/성별 정보 */}
                   <div className="px-4 py-2 border-b border-gray-100">
-                    <div className="text-xs text-gray-400">직급</div>
-                    <div className="text-sm text-gray-600">
-                      {currentUser?.level === 'intern' && '인턴'}
-                      {currentUser?.level === 'staff' && '사원'}
-                      {currentUser?.level === 'assistant' && '대리'}
-                      {currentUser?.level === 'manager' && '과장'}
-                      {currentUser?.level === 'deputy' && '차장'}
-                      {currentUser?.level === 'general' && '부장'}
-                      {currentUser?.level === 'director' && '이사'}
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1">
+                        <div className="text-xs text-gray-400">직급</div>
+                        <div className="text-sm text-gray-600">
+                          {currentUser?.level === 'intern' && '인턴'}
+                          {currentUser?.level === 'staff' && '사원'}
+                          {currentUser?.level === 'assistant' && '대리'}
+                          {currentUser?.level === 'manager' && '과장'}
+                          {currentUser?.level === 'deputy' && '차장'}
+                          {currentUser?.level === 'general' && '부장'}
+                          {currentUser?.level === 'director' && '이사'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-400">나이</div>
+                        <div className="text-sm text-gray-600">
+                          {currentUser?.age ? `${currentUser.age}세` : '-'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-400">성별</div>
+                        <div className="text-sm text-gray-600">
+                          {currentUser?.gender === 'male' && '남성'}
+                          {currentUser?.gender === 'female' && '여성'}
+                          {!currentUser?.gender && '-'}
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
