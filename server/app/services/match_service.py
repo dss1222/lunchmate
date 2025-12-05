@@ -14,12 +14,31 @@ class MatchService:
     """매칭 관련 비즈니스 로직"""
     
     @staticmethod
-    def find_matching_users(requester: dict, relaxation_level: int = 0) -> List[dict]:
+    def get_elapsed_seconds(joined_at: str) -> int:
+        """joinedAt 시간으로부터 경과 시간(초) 계산"""
+        try:
+            joined_time = datetime.fromisoformat(joined_at)
+            elapsed = (datetime.now() - joined_time).total_seconds()
+            return max(0, int(elapsed))
+        except:
+            return 0
+    
+    @staticmethod
+    def get_relaxation_level_from_elapsed(elapsed_seconds: int) -> int:
+        """경과 시간으로 relaxation level 계산"""
+        return min(elapsed_seconds // RELAXATION_INTERVAL_SECONDS, 3)
+    
+    @staticmethod
+    def check_one_way_match(checker: dict, target: dict, checker_relaxation: int) -> bool:
         """
-        조건에 맞는 매칭 대상 찾기
-        relaxation_level: 0 = 모든 조건, 1+ = 조건 완화 단계
+        단방향 조건 체크: checker가 target을 원하는가?
+        checker의 preferences와 relaxation_level로 target을 체크
         """
-        preferences = requester.get("preferences", {})
+        preferences = checker.get("preferences", {})
+        
+        # 조건이 없으면 무조건 OK
+        if not preferences:
+            return True
         
         # 선택된 조건 순서 결정
         active_conditions = []
@@ -30,41 +49,69 @@ class MatchService:
         if preferences.get("sameLevel"):
             active_conditions.append("level")
         
-        # relaxation_level에 따라 조건 완화
-        relaxed_conditions = active_conditions[relaxation_level:] if relaxation_level < len(active_conditions) else []
+        # 조건이 없으면 OK
+        if not active_conditions:
+            return True
         
+        # relaxation_level에 따라 남은 조건 (완화되지 않은 조건)
+        remaining_conditions = active_conditions[checker_relaxation:] if checker_relaxation < len(active_conditions) else []
+        
+        # 남은 조건 체크
+        for cond in remaining_conditions:
+            if cond == "gender":
+                if checker.get("gender") and target.get("gender"):
+                    if checker["gender"] != target["gender"]:
+                        return False
+            elif cond == "age":
+                if checker.get("age") and target.get("age"):
+                    if not is_similar_age(checker["age"], target["age"]):
+                        return False
+            elif cond == "level":
+                if checker.get("level") and target.get("level"):
+                    if not is_similar_level(checker["level"], target["level"]):
+                        return False
+        
+        return True
+    
+    @staticmethod
+    def check_mutual_match(user_a: dict, user_b: dict, a_relaxation: int, b_relaxation: int) -> bool:
+        """
+        양방향 조건 체크: 두 사용자가 서로를 원하는가?
+        A가 B를 원하고 AND B가 A를 원해야 함
+        """
+        a_wants_b = MatchService.check_one_way_match(user_a, user_b, a_relaxation)
+        b_wants_a = MatchService.check_one_way_match(user_b, user_a, b_relaxation)
+        return a_wants_b and b_wants_a
+    
+    @staticmethod
+    def find_matching_users(requester: dict, relaxation_level: int = 0) -> List[dict]:
+        """
+        조건에 맞는 매칭 대상 찾기 (양방향 체크)
+        - requester가 candidate를 원하는가? (requester의 조건)
+        - candidate가 requester를 원하는가? (candidate의 조건)
+        """
         matching_users = []
         all_waiting = data_store.get_all_waiting_users()
         
-        for u in all_waiting:
-            if u["id"] == requester["id"]:
+        for candidate in all_waiting:
+            if candidate["id"] == requester["id"]:
                 continue
             
-            # 기본 조건: 시간, 가격대, 메뉴
-            if u["timeSlot"] != requester["timeSlot"]:
+            # 기본 조건: 시간, 가격대, 메뉴 (필수)
+            if candidate["timeSlot"] != requester["timeSlot"]:
                 continue
-            if u["priceRange"] != requester["priceRange"]:
+            if candidate["priceRange"] != requester["priceRange"]:
                 continue
-            if u["menu"] != requester["menu"]:
+            if candidate["menu"] != requester["menu"]:
                 continue
             
-            # 선호 조건 체크
-            match = True
+            # candidate의 경과 시간으로 relaxation level 계산
+            candidate_elapsed = MatchService.get_elapsed_seconds(candidate.get("joinedAt", ""))
+            candidate_relaxation = MatchService.get_relaxation_level_from_elapsed(candidate_elapsed)
             
-            if "gender" in relaxed_conditions and requester.get("gender") and u.get("gender"):
-                if requester["gender"] != u["gender"]:
-                    match = False
-            
-            if "age" in relaxed_conditions and requester.get("age") and u.get("age"):
-                if not is_similar_age(requester["age"], u["age"]):
-                    match = False
-            
-            if "level" in relaxed_conditions and requester.get("level") and u.get("level"):
-                if not is_similar_level(requester["level"], u["level"]):
-                    match = False
-            
-            if match:
-                matching_users.append(u)
+            # 양방향 조건 체크
+            if MatchService.check_mutual_match(requester, candidate, relaxation_level, candidate_relaxation):
+                matching_users.append(candidate)
         
         return matching_users
     
