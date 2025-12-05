@@ -13,5 +13,6 @@ export default defineConfig({
       }
     }
   }
+  // 배포 시 Vercel rewrites 사용: /api/* → https://lunchmate.onrender.com/*
 })
 

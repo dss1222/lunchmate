@@ -92,6 +92,14 @@ class DataStore:
         """대기열에서 여러 유저 제거"""
         self._waiting_users = [u for u in self._waiting_users if u["id"] not in request_ids]
     
+    def remove_waiting_user_by_user_id(self, user_id: str):
+        """userId로 대기열에서 유저 제거 (중복 참여 방지)"""
+        self._waiting_users = [u for u in self._waiting_users if u.get("userId") != user_id]
+    
+    def get_waiting_user_by_user_id(self, user_id: str) -> Optional[dict]:
+        """userId로 대기 유저 조회"""
+        return next((u for u in self._waiting_users if u.get("userId") == user_id), None)
+    
     def get_waiting_users_by_conditions(self, time_slot: str, price_range: str, menu: str) -> List[dict]:
         """조건에 맞는 대기 유저 조회"""
         return [

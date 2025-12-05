@@ -102,6 +102,10 @@ class MatchService:
                    menu: str, preferences: dict) -> dict:
         """매칭 참여"""
         
+        # 동일 userId의 기존 매칭 요청 제거 (중복 참여 방지)
+        if user_id:
+            data_store.remove_waiting_user_by_user_id(user_id)
+        
         match_request = {
             "id": generate_id(),
             "userId": user_id or generate_id(),
@@ -216,10 +220,12 @@ class MatchService:
                 "relaxationMessage": "매칭 시간이 초과되었습니다.",
             }
         
-        # 대기 중
-        waiting_count = len(data_store.get_waiting_users_by_conditions(
+        # 대기 중 (자기 자신은 제외한 카운트)
+        all_waiting = data_store.get_waiting_users_by_conditions(
             in_waiting["timeSlot"], in_waiting["priceRange"], in_waiting["menu"]
-        ))
+        )
+        # 자기 자신 제외
+        waiting_count = len([u for u in all_waiting if u["id"] != match_request_id])
         
         return {
             "status": "waiting",
