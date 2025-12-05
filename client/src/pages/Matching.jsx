@@ -32,6 +32,36 @@ export default function Matching({ currentUser, refreshUser }) {
   const [elapsed, setElapsed] = useState(0)
   const [relaxationLevel, setRelaxationLevel] = useState(0)
   const [relaxationMessage, setRelaxationMessage] = useState(null)
+  
+  // ref 선언 (useEffect 재실행 방지)
+  const elapsedRef = useRef(0)
+  const isMatchedRef = useRef(false)
+
+  // 매칭 상태 확인 함수
+  const checkMatchStatus = useCallback(async () => {
+    if (isMatchedRef.current) return
+    
+    try {
+      const result = await getMatchStatus(matchRequestId, elapsedRef.current)
+      
+      if (result.status === 'matched') {
+        isMatchedRef.current = true
+        navigate(`/result?groupId=${result.groupId}`)
+      } else if (result.status === 'timeout') {
+        isMatchedRef.current = true
+        navigate('/fail', { state: { reason: 'timeout', formData } })
+      } else if (result.status === 'waiting') {
+        setWaitingCount(result.waitingCount || 1)
+        setRelaxationLevel(result.relaxationLevel || 0)
+        setRelaxationMessage(result.relaxationMessage)
+      } else if (result.status === 'not_found') {
+        isMatchedRef.current = true
+        navigate('/fail', { state: { reason: 'not_found', formData } })
+      }
+    } catch (err) {
+      console.error('Poll error:', err)
+    }
+  }, [matchRequestId, navigate, formData])
 
   useEffect(() => {
     if (!matchRequestId) {
@@ -39,29 +69,11 @@ export default function Matching({ currentUser, refreshUser }) {
       return
     }
 
+    // 초기 상태 확인
+    checkMatchStatus()
+
     // 상태 폴링 (2초마다)
-    const pollInterval = setInterval(async () => {
-      try {
-        const result = await getMatchStatus(matchRequestId, elapsed)
-        
-        if (result.status === 'matched') {
-          clearInterval(pollInterval)
-          navigate(`/result?groupId=${result.groupId}`)
-        } else if (result.status === 'timeout') {
-          clearInterval(pollInterval)
-          navigate('/fail', { state: { reason: 'timeout', formData } })
-        } else if (result.status === 'waiting') {
-          setWaitingCount(result.waitingCount || 1)
-          setRelaxationLevel(result.relaxationLevel || 0)
-          setRelaxationMessage(result.relaxationMessage)
-        } else if (result.status === 'not_found') {
-          clearInterval(pollInterval)
-          navigate('/fail', { state: { reason: 'not_found', formData } })
-        }
-      } catch (err) {
-        console.error('Poll error:', err)
-      }
-    }, 2000)
+    const pollInterval = setInterval(checkMatchStatus, 2000)
 
     // 경과 시간 카운터 (1초마다)
     const timerInterval = setInterval(() => {
